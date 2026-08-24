@@ -1,0 +1,1841 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LabMind — Master System Document</title>
+<style>
+  :root { --bg:#050509; }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin:0; background:var(--bg); font-family: system-ui,-apple-system,sans-serif; }
+
+  /* ===== COVER ===== */
+  .cover {
+    min-height: 62vh; display:flex; flex-direction:column; justify-content:center;
+    padding: 3rem 1.75rem 2.5rem;
+    background:
+      radial-gradient(circle at 20% 20%, #1a0a3d44, transparent 55%),
+      radial-gradient(circle at 80% 60%, #0a1f3d44, transparent 55%),
+      radial-gradient(circle at 50% 90%, #0d2a1d44, transparent 50%),
+      #050509;
+    border-bottom: 0.5px solid #1e293b;
+  }
+  .cover-eyebrow { font-size:11px; letter-spacing:0.18em; text-transform:uppercase; color:#475569; margin-bottom:14px; }
+  .cover-title { font-size:52px; font-weight:700; color:#fff; letter-spacing:-0.03em; line-height:1; margin-bottom:14px; }
+  .cover-sub { font-size:16px; color:#94a3b8; max-width:540px; line-height:1.6; margin-bottom:22px; }
+  .cover-meta { display:flex; flex-wrap:wrap; gap:8px; }
+  .cover-chip {
+    font-size:11px; color:#cbd5e1; background:#ffffff0a;
+    border:0.5px solid #ffffff1a; border-radius:999px; padding:6px 13px;
+  }
+  .cover-tagline {
+    margin-top:26px; font-size:13px; color:#64748b; font-style:italic;
+    border-left:2px solid #7c3aed55; padding-left:12px;
+  }
+
+  /* ===== STICKY NAV ===== */
+  .topnav {
+    position: sticky; top:0; z-index:100;
+    background: #08080fee; backdrop-filter: blur(12px);
+    border-bottom: 0.5px solid #1e293b;
+    display:flex; gap:4px; padding:8px 10px; overflow-x:auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .topnav::-webkit-scrollbar { height:0; }
+  .navlink {
+    flex-shrink:0; font-size:12px; font-weight:500; text-decoration:none;
+    color:#94a3b8; padding:7px 13px; border-radius:8px;
+    border:0.5px solid transparent; white-space:nowrap; transition:all 0.15s;
+  }
+  .navlink:hover { color:#e2e8f0; background:#ffffff08; }
+  .navlink.active {
+    color:#fff; background:color-mix(in srgb, var(--accent) 18%, transparent);
+    border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+  }
+
+  /* ===== SECTION DIVIDERS ===== */
+  .doc-section { scroll-margin-top: 56px; position:relative; }
+  .doc-section + .doc-section { border-top: 8px solid #02020a; }
+
+  /* progress bar */
+  .progress { position:fixed; top:0; left:0; height:2px; width:0; z-index:200;
+    background: linear-gradient(90deg,#1d9e75,#7c3aed,#dc2626); transition:width 0.1s; }
+
+  /* back to top */
+  .totop {
+    position:fixed; bottom:18px; right:18px; z-index:150;
+    width:42px; height:42px; border-radius:50%;
+    background:#1e293b; border:0.5px solid #334155; color:#cbd5e1;
+    font-size:18px; display:flex; align-items:center; justify-content:center;
+    cursor:pointer; opacity:0; pointer-events:none; transition:opacity 0.2s; text-decoration:none;
+  }
+  .totop.show { opacity:1; pointer-events:auto; }
+
+  /* footer */
+  .masterfoot {
+    padding:2.5rem 1.75rem; text-align:center; color:#475569; font-size:12px;
+    border-top:0.5px solid #1e293b; background:#050509;
+  }
+
+/* ===== overview ===== */
+#sec-overview * { box-sizing: border-box; margin: 0; padding: 0; }#sec-overview { font-family: system-ui, -apple-system, sans-serif; background: #f8f7f4; color: #1a1a1a; padding: 2rem 1.5rem; min-height: 100vh; }#sec-overview h1 { font-size: 22px; font-weight: 500; margin-bottom: 4px; }#sec-overview .subtitle { font-size: 14px; color: #666; margin-bottom: 2rem; }#sec-overview .layer-label { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #999; margin-bottom: 10px; padding-left: 4px; }#sec-overview /* Layer 1 — Data Sources */
+  .sources-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; margin-bottom: 10px; }#sec-overview .source-box { background: #fff; border: 0.5px solid #ddd; border-radius: 8px; padding: 10px 12px; text-align: center; }#sec-overview .source-icon { font-size: 20px; margin-bottom: 4px; }#sec-overview .source-name { font-size: 12px; font-weight: 500; color: #333; }#sec-overview .source-sub { font-size: 11px; color: #999; margin-top: 2px; }#sec-overview /* Connector arrows */
+  .arrow-down { text-align: center; color: #bbb; font-size: 20px; margin: 6px 0; line-height: 1; }#sec-overview .arrow-label { font-size: 11px; color: #aaa; display: block; margin-top: -2px; }#sec-overview /* Layer 2 — Integration Bridge */
+  .bridge { background: #1a1a2e; border-radius: 10px; padding: 14px 16px; margin-bottom: 10px; display: flex; align-items: center; gap: 16px; }#sec-overview .bridge-icon { font-size: 22px; flex-shrink: 0; }#sec-overview .bridge-title { font-size: 14px; font-weight: 500; color: #e8e8f0; }#sec-overview .bridge-sub { font-size: 12px; color: #8888aa; margin-top: 2px; }#sec-overview .bridge-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }#sec-overview .bridge-tag { font-size: 10px; background: rgba(255,255,255,0.08); color: #aaa; padding: 3px 8px; border-radius: 4px; }#sec-overview /* Layer 3 — Agent Engine */
+  .engine { background: #0f3460; border-radius: 10px; padding: 16px; margin-bottom: 10px; }#sec-overview .engine-header { font-size: 14px; font-weight: 500; color: #e0eaff; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }#sec-overview .agents-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; }#sec-overview .agent-card { background: rgba(255,255,255,0.07); border: 0.5px solid rgba(255,255,255,0.12); border-radius: 8px; padding: 10px 12px; }#sec-overview .agent-name { font-size: 12px; font-weight: 500; color: #c8dcff; margin-bottom: 4px; }#sec-overview .agent-desc { font-size: 11px; color: #7a9acc; line-height: 1.4; }#sec-overview .agent-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 5px; vertical-align: middle; }#sec-overview .dot-green { background: #4ade80; }#sec-overview .dot-amber { background: #fbbf24; }#sec-overview .dot-blue { background: #60a5fa; }#sec-overview .dot-purple { background: #a78bfa; }#sec-overview .dot-coral { background: #f87171; }#sec-overview .dot-teal { background: #2dd4bf; }#sec-overview /* Layer 4 — Outputs */
+  .outputs-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; margin-bottom: 10px; }#sec-overview .output-box { background: #fff; border: 0.5px solid #ddd; border-radius: 8px; padding: 10px 12px; }#sec-overview .output-title { font-size: 12px; font-weight: 500; color: #333; margin-bottom: 3px; display: flex; align-items: center; gap: 6px; }#sec-overview .output-desc { font-size: 11px; color: #888; line-height: 1.4; }#sec-overview /* Data flow note */
+  .flow-note { background: #f0fdf4; border: 0.5px solid #bbf7d0; border-radius: 8px; padding: 12px 14px; margin-top: 1.5rem; }#sec-overview .flow-note-title { font-size: 12px; font-weight: 500; color: #166534; margin-bottom: 4px; }#sec-overview .flow-note-body { font-size: 12px; color: #15803d; line-height: 1.5; }#sec-overview /* Example scenario */
+  .scenario { margin-top: 1.5rem; }#sec-overview .scenario-title { font-size: 13px; font-weight: 500; color: #333; margin-bottom: 10px; }#sec-overview .steps { display: flex; flex-direction: column; gap: 6px; }#sec-overview .step { display: flex; align-items: flex-start; gap: 10px; background: #fff; border: 0.5px solid #e5e5e5; border-radius: 8px; padding: 10px 12px; }#sec-overview .step-num { font-size: 11px; font-weight: 600; color: #fff; background: #0f3460; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }#sec-overview .step-text { font-size: 12px; color: #444; line-height: 1.5; }#sec-overview .step-text strong { color: #1a1a1a; font-weight: 500; }
+
+
+/* ===== hierarchy ===== */
+#sec-hierarchy * { box-sizing: border-box; margin: 0; padding: 0; }#sec-hierarchy { font-family: system-ui, -apple-system, sans-serif; background: #0d0d14; color: #e8e8f0; padding: 2rem 1.5rem; min-height: 100vh; }#sec-hierarchy h1 { font-size: 22px; font-weight: 500; color: #fff; margin-bottom: 4px; }#sec-hierarchy .subtitle { font-size: 13px; color: #666; margin-bottom: 2.5rem; }#sec-hierarchy .section-label {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.12em;
+    text-transform: uppercase; color: #555; margin-bottom: 12px; padding-left: 2px;
+  }#sec-hierarchy /* ===== TIER SYSTEM ===== */
+  .tier { margin-bottom: 8px; position: relative; }#sec-hierarchy .tier-line {
+    display: flex; align-items: stretch; gap: 0;
+    margin-bottom: 0;
+  }#sec-hierarchy .tier-badge {
+    writing-mode: vertical-lr; transform: rotate(180deg);
+    font-size: 9px; font-weight: 700; letter-spacing: 0.1em;
+    text-transform: uppercase; padding: 12px 8px;
+    border-radius: 8px 0 0 8px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+  }#sec-hierarchy .tier-content { flex: 1; border-radius: 0 8px 8px 0; padding: 14px 16px; }#sec-hierarchy /* Tier colors */
+  .tier-ceo .tier-badge { background: #7c3aed; color: #ede9fe; }#sec-hierarchy .tier-ceo .tier-content { background: #1a0f2e; border: 0.5px solid #7c3aed44; }#sec-hierarchy .tier-manager .tier-badge { background: #1d4ed8; color: #dbeafe; }#sec-hierarchy .tier-manager .tier-content { background: #0f1f3d; border: 0.5px solid #1d4ed844; }#sec-hierarchy .tier-worker .tier-badge { background: #0f766e; color: #ccfbf1; }#sec-hierarchy .tier-worker .tier-content { background: #0c1f1e; border: 0.5px solid #0f766e44; }#sec-hierarchy .tier-memory .tier-badge { background: #92400e; color: #fef3c7; }#sec-hierarchy .tier-memory .tier-content { background: #1c1208; border: 0.5px solid #92400e44; }#sec-hierarchy /* Node cards */
+  .node-row { display: flex; flex-wrap: wrap; gap: 8px; }#sec-hierarchy .node {
+    background: rgba(255,255,255,0.04); border: 0.5px solid rgba(255,255,255,0.1);
+    border-radius: 8px; padding: 10px 12px; flex: 1; min-width: 140px;
+  }#sec-hierarchy .node-title {
+    font-size: 12px; font-weight: 600; margin-bottom: 4px;
+    display: flex; align-items: center; gap: 6px;
+  }#sec-hierarchy .node-desc { font-size: 11px; color: #778; line-height: 1.5; }#sec-hierarchy .node-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 7px; }#sec-hierarchy .node-tag {
+    font-size: 10px; padding: 2px 7px; border-radius: 4px;
+    background: rgba(255,255,255,0.06); color: #889;
+  }#sec-hierarchy /* Connector arrows between tiers */
+  .connector {
+    display: flex; align-items: center; justify-content: center;
+    gap: 8px; padding: 4px 0; margin-left: 28px;
+    color: #444; font-size: 11px;
+  }#sec-hierarchy .connector-line { flex: 1; height: 0.5px; background: #333; max-width: 60px; }#sec-hierarchy .connector-label { font-size: 10px; color: #555; white-space: nowrap; }#sec-hierarchy /* Status dot */
+  .dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; flex-shrink: 0; }#sec-hierarchy .dot-purple { background: #a78bfa; }#sec-hierarchy .dot-blue { background: #60a5fa; }#sec-hierarchy .dot-teal { background: #2dd4bf; }#sec-hierarchy .dot-green { background: #4ade80; }#sec-hierarchy .dot-amber { background: #fbbf24; }#sec-hierarchy .dot-coral { background: #f87171; }#sec-hierarchy .dot-gold { background: #fcd34d; }#sec-hierarchy /* Memory & Learning section */
+  .memory-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 8px; }#sec-hierarchy .mem-card {
+    background: rgba(255,255,255,0.03); border: 0.5px solid #92400e44;
+    border-radius: 8px; padding: 12px;
+  }#sec-hierarchy .mem-icon { font-size: 18px; margin-bottom: 6px; }#sec-hierarchy .mem-title { font-size: 12px; font-weight: 500; color: #fcd34d; margin-bottom: 4px; }#sec-hierarchy .mem-desc { font-size: 11px; color: #877; line-height: 1.5; }#sec-hierarchy /* Human interface */
+  .human-box {
+    background: #111; border: 0.5px solid #333; border-radius: 10px;
+    padding: 14px 16px; margin-bottom: 8px;
+    display: flex; align-items: center; gap: 14px;
+  }#sec-hierarchy .human-icon { font-size: 28px; flex-shrink: 0; }#sec-hierarchy .human-title { font-size: 14px; font-weight: 500; color: #e0e0e0; }#sec-hierarchy .human-desc { font-size: 12px; color: #666; margin-top: 3px; }#sec-hierarchy /* Learning loop visual */
+  .loop-box {
+    background: #0a0a16; border: 0.5px solid #333; border-radius: 10px;
+    padding: 16px; margin-top: 1.5rem;
+  }#sec-hierarchy .loop-title { font-size: 13px; font-weight: 500; color: #c4b5fd; margin-bottom: 12px; }#sec-hierarchy .loop-steps { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }#sec-hierarchy .loop-step {
+    background: rgba(124, 58, 237, 0.1); border: 0.5px solid #7c3aed44;
+    border-radius: 6px; padding: 8px 12px; font-size: 11px; color: #c4b5fd;
+    flex: 1; min-width: 100px; text-align: center;
+  }#sec-hierarchy .loop-arrow { color: #7c3aed; font-size: 14px; flex-shrink: 0; }#sec-hierarchy /* What the lab person sees */
+  .interface-strip {
+    background: #111827; border: 0.5px solid #374151; border-radius: 10px;
+    padding: 14px 16px; margin-top: 1.5rem;
+  }#sec-hierarchy .interface-title { font-size: 13px; font-weight: 500; color: #93c5fd; margin-bottom: 10px; }#sec-hierarchy .interface-items { display: flex; flex-wrap: wrap; gap: 8px; }#sec-hierarchy .interface-item {
+    background: rgba(255,255,255,0.04); border: 0.5px solid #374151;
+    border-radius: 7px; padding: 8px 12px; font-size: 11px; color: #94a3b8;
+    display: flex; align-items: center; gap: 6px;
+  }#sec-hierarchy hr { border: none; border-top: 0.5px solid #222; margin: 1.5rem 0; }
+
+
+/* ===== security ===== */
+#sec-security * { box-sizing: border-box; margin: 0; padding: 0; }#sec-security { font-family: system-ui, -apple-system, sans-serif; background: #f7f8fa; color: #1a1a1a; padding: 2rem 1.5rem; }#sec-security h1 { font-size: 22px; font-weight: 500; margin-bottom: 4px; }#sec-security .subtitle { font-size: 13px; color: #888; margin-bottom: 2rem; }#sec-security .section-label {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.1em;
+    text-transform: uppercase; color: #aaa; margin-bottom: 10px;
+  }#sec-security hr { border: none; border-top: 0.5px solid #e5e5e5; margin: 1.75rem 0; }#sec-security /* ===== PRINCIPLE CARDS ===== */
+  .principles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; margin-bottom: 1.5rem; }#sec-security .principle {
+    background: #fff; border: 0.5px solid #e8e8e8; border-radius: 10px;
+    padding: 14px; text-align: center;
+  }#sec-security .p-icon { font-size: 22px; margin-bottom: 6px; }#sec-security .p-title { font-size: 12px; font-weight: 600; color: #1a1a1a; margin-bottom: 3px; }#sec-security .p-desc { font-size: 11px; color: #888; line-height: 1.4; }#sec-security /* ===== ARCHITECTURE LAYERS ===== */
+  .arch-layer {
+    border-radius: 10px; margin-bottom: 8px; overflow: hidden;
+  }#sec-security .arch-header {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px; font-size: 12px; font-weight: 600;
+  }#sec-security .arch-body { padding: 12px 14px; }#sec-security .arch-items { display: flex; flex-wrap: wrap; gap: 6px; }#sec-security .arch-item {
+    font-size: 11px; padding: 5px 10px; border-radius: 6px;
+    display: flex; align-items: center; gap: 5px;
+  }#sec-security /* Colors per layer */
+  .layer-perimeter .arch-header { background: #1e3a5f; color: #dbeafe; }#sec-security .layer-perimeter .arch-body { background: #f0f5ff; }#sec-security .layer-perimeter .arch-item { background: #dbeafe; color: #1e3a5f; }#sec-security .layer-data .arch-header { background: #14532d; color: #dcfce7; }#sec-security .layer-data .arch-body { background: #f0fdf4; }#sec-security .layer-data .arch-item { background: #dcfce7; color: #14532d; }#sec-security .layer-access .arch-header { background: #4c1d95; color: #ede9fe; }#sec-security .layer-access .arch-body { background: #faf5ff; }#sec-security .layer-access .arch-item { background: #ede9fe; color: #4c1d95; }#sec-security .layer-agent .arch-header { background: #7c2d12; color: #ffedd5; }#sec-security .layer-agent .arch-body { background: #fff7ed; }#sec-security .layer-agent .arch-item { background: #ffedd5; color: #7c2d12; }#sec-security .layer-audit .arch-header { background: #374151; color: #f3f4f6; }#sec-security .layer-audit .arch-body { background: #f9fafb; }#sec-security .layer-audit .arch-item { background: #e5e7eb; color: #374151; }#sec-security /* ===== DEPLOYMENT OPTIONS ===== */
+  .deploy-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; }#sec-security .deploy-card {
+    background: #fff; border: 0.5px solid #e8e8e8; border-radius: 10px;
+    padding: 14px; position: relative;
+  }#sec-security .deploy-badge {
+    display: inline-block; font-size: 9px; font-weight: 700;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 2px 7px; border-radius: 4px; margin-bottom: 8px;
+  }#sec-security .badge-recommended { background: #dcfce7; color: #14532d; }#sec-security .badge-flexible { background: #dbeafe; color: #1e3a5f; }#sec-security .badge-airgapped { background: #fef3c7; color: #78350f; }#sec-security .deploy-title { font-size: 13px; font-weight: 500; margin-bottom: 5px; }#sec-security .deploy-desc { font-size: 11px; color: #666; line-height: 1.5; margin-bottom: 8px; }#sec-security .deploy-for { font-size: 10px; color: #999; }#sec-security .deploy-for span { font-weight: 600; color: #555; }#sec-security /* ===== REGULATORY COMPLIANCE ===== */
+  .reg-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px; }#sec-security .reg-card {
+    background: #fff; border: 0.5px solid #e8e8e8; border-radius: 10px;
+    padding: 14px;
+  }#sec-security .reg-flag { font-size: 20px; margin-bottom: 4px; }#sec-security .reg-name { font-size: 13px; font-weight: 600; margin-bottom: 2px; }#sec-security .reg-full { font-size: 10px; color: #999; margin-bottom: 8px; }#sec-security .reg-items { display: flex; flex-direction: column; gap: 4px; }#sec-security .reg-item { font-size: 11px; color: #555; display: flex; align-items: flex-start; gap: 5px; line-height: 1.4; }#sec-security .reg-check { color: #16a34a; flex-shrink: 0; font-size: 12px; }#sec-security .reg-build { color: #d97706; flex-shrink: 0; font-size: 12px; }#sec-security /* ===== KEY PROMISE BOX ===== */
+  .promise {
+    background: #0f172a; border-radius: 10px; padding: 16px;
+    display: flex; gap: 14px; align-items: flex-start; margin-bottom: 1.5rem;
+  }#sec-security .promise-icon { font-size: 24px; flex-shrink: 0; }#sec-security .promise-title { font-size: 14px; font-weight: 500; color: #f1f5f9; margin-bottom: 4px; }#sec-security .promise-desc { font-size: 12px; color: #94a3b8; line-height: 1.6; }#sec-security /* ===== WHAT NEVER LEAVES ===== */
+  .never-box {
+    background: #fff0f0; border: 0.5px solid #fca5a5; border-radius: 10px;
+    padding: 14px; margin-top: 1rem;
+  }#sec-security .never-title { font-size: 12px; font-weight: 600; color: #991b1b; margin-bottom: 8px; }#sec-security .never-items { display: flex; flex-wrap: wrap; gap: 6px; }#sec-security .never-item {
+    font-size: 11px; background: #fee2e2; color: #991b1b;
+    padding: 4px 10px; border-radius: 5px;
+    display: flex; align-items: center; gap: 4px;
+  }
+
+
+/* ===== atlas ===== */
+#sec-atlas * { box-sizing: border-box; margin: 0; padding: 0; }#sec-atlas {
+    font-family: system-ui, -apple-system, sans-serif;
+    background: #080810;
+    color: #e2e8f0;
+    padding: 2rem 1.5rem;
+    line-height: 1.6;
+  }#sec-atlas /* ===== TYPOGRAPHY ===== */
+  h1 { font-size: 24px; font-weight: 600; color: #fff; letter-spacing: -0.02em; }#sec-atlas h2 { font-size: 16px; font-weight: 500; color: #c4b5fd; margin-bottom: 12px; letter-spacing: 0.01em; }#sec-atlas .subtitle { font-size: 13px; color: #475569; margin-bottom: 2.5rem; }#sec-atlas .section-label {
+    font-size: 9px; font-weight: 700; letter-spacing: 0.14em;
+    text-transform: uppercase; color: #334155; margin-bottom: 10px;
+  }#sec-atlas hr { border: none; border-top: 0.5px solid #1e293b; margin: 2rem 0; }#sec-atlas /* ===== NAME PLATE ===== */
+  .nameplate {
+    background: linear-gradient(135deg, #1a0a3d 0%, #0a1628 50%, #0d1f0d 100%);
+    border: 0.5px solid #7c3aed33;
+    border-radius: 14px; padding: 20px; margin-bottom: 2rem;
+    display: flex; align-items: flex-start; gap: 16px;
+  }#sec-atlas .nameplate-icon { font-size: 36px; flex-shrink: 0; }#sec-atlas .nameplate-name { font-size: 26px; font-weight: 700; color: #a78bfa; letter-spacing: -0.02em; }#sec-atlas .nameplate-expand { font-size: 11px; color: #5b4a8a; margin-top: 2px; margin-bottom: 8px; }#sec-atlas .nameplate-desc { font-size: 13px; color: #94a3b8; line-height: 1.6; }#sec-atlas /* ===== MEMORY TYPES ===== */
+  .mem-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px; }#sec-atlas .mem-card {
+    border-radius: 10px; padding: 14px;
+    border: 0.5px solid transparent;
+  }#sec-atlas .mem-label { font-size: 9px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 6px; }#sec-atlas .mem-title { font-size: 13px; font-weight: 600; margin-bottom: 5px; }#sec-atlas .mem-desc { font-size: 11px; line-height: 1.5; opacity: 0.8; }#sec-atlas .mem-tech { margin-top: 8px; }#sec-atlas .mem-tech-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.5; margin-bottom: 4px; }#sec-atlas .mem-tags { display: flex; flex-wrap: wrap; gap: 4px; }#sec-atlas .mem-tag { font-size: 10px; padding: 2px 7px; border-radius: 4px; opacity: 0.7; }#sec-atlas /* Memory type colors */
+  .mem-episodic { background: #1a0f2e; border-color: #7c3aed33; color: #c4b5fd; }#sec-atlas .mem-episodic .mem-tag { background: #7c3aed22; }#sec-atlas .mem-semantic { background: #0f1f3d; border-color: #1d4ed833; color: #93c5fd; }#sec-atlas .mem-semantic .mem-tag { background: #1d4ed822; }#sec-atlas .mem-procedural { background: #0c1f1e; border-color: #0f766e33; color: #5eead4; }#sec-atlas .mem-procedural .mem-tag { background: #0f766e22; }#sec-atlas .mem-working { background: #1c1208; border-color: #92400e33; color: #fcd34d; }#sec-atlas .mem-working .mem-tag { background: #92400e22; }#sec-atlas .mem-collective { background: #1a0a0f; border-color: #9f123a33; color: #fda4af; }#sec-atlas .mem-collective .mem-tag { background: #9f123a22; }#sec-atlas /* ===== GROWTH STAGES ===== */
+  .stages { display: flex; flex-direction: column; gap: 0; }#sec-atlas .stage { display: flex; gap: 0; align-items: stretch; }#sec-atlas .stage-num {
+    width: 36px; flex-shrink: 0; display: flex; flex-direction: column;
+    align-items: center; gap: 0;
+  }#sec-atlas .stage-circle {
+    width: 28px; height: 28px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700; flex-shrink: 0;
+    position: relative; z-index: 1;
+  }#sec-atlas .stage-line { width: 1px; flex: 1; margin: 0 auto; }#sec-atlas .stage-body {
+    flex: 1; background: #0f172a; border: 0.5px solid #1e293b;
+    border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; margin-left: 10px;
+  }#sec-atlas .stage-title { font-size: 13px; font-weight: 600; margin-bottom: 4px; }#sec-atlas .stage-time { font-size: 10px; opacity: 0.5; margin-bottom: 8px; }#sec-atlas .stage-items { display: flex; flex-direction: column; gap: 4px; }#sec-atlas .stage-item { font-size: 11px; color: #94a3b8; display: flex; gap: 6px; }#sec-atlas .stage-item::before { content: "→"; color: #475569; flex-shrink: 0; }#sec-atlas /* Stage colors */
+  .s1 .stage-circle { background: #1e3a5f; color: #60a5fa; }#sec-atlas .s1 .stage-line { background: #1e3a5f; }#sec-atlas .s1 .stage-title { color: #60a5fa; }#sec-atlas .s2 .stage-circle { background: #14532d; color: #4ade80; }#sec-atlas .s2 .stage-line { background: #14532d; }#sec-atlas .s2 .stage-title { color: #4ade80; }#sec-atlas .s3 .stage-circle { background: #4c1d95; color: #a78bfa; }#sec-atlas .s3 .stage-line { background: #4c1d95; }#sec-atlas .s3 .stage-title { color: #a78bfa; }#sec-atlas .s4 .stage-circle { background: #7c2d12; color: #fb923c; }#sec-atlas .s4 .stage-line { background: #7c2d12; }#sec-atlas .s4 .stage-title { color: #fb923c; }#sec-atlas .s5 .stage-circle { background: #831843; color: #f9a8d4; }#sec-atlas .s5 .stage-line { background: transparent; }#sec-atlas .s5 .stage-title { color: #f9a8d4; }#sec-atlas /* ===== INTELLIGENCE MODULES ===== */
+  .modules { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px; }#sec-atlas .module {
+    background: #0f172a; border: 0.5px solid #1e293b;
+    border-radius: 10px; padding: 14px;
+  }#sec-atlas .module-icon { font-size: 20px; margin-bottom: 8px; }#sec-atlas .module-title { font-size: 13px; font-weight: 600; color: #e2e8f0; margin-bottom: 5px; }#sec-atlas .module-desc { font-size: 11px; color: #64748b; line-height: 1.5; margin-bottom: 8px; }#sec-atlas .module-spec { font-size: 10px; color: #475569; font-family: monospace; }#sec-atlas /* ===== COMMUNICATION PROTOCOL ===== */
+  .protocol-table { width: 100%; border-collapse: collapse; }#sec-atlas .protocol-table th {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.08em;
+    text-transform: uppercase; color: #475569; padding: 8px 10px;
+    text-align: left; border-bottom: 0.5px solid #1e293b;
+  }#sec-atlas .protocol-table td {
+    font-size: 11px; color: #94a3b8; padding: 8px 10px;
+    border-bottom: 0.5px solid #0f172a; vertical-align: top;
+  }#sec-atlas .protocol-table tr:last-child td { border-bottom: none; }#sec-atlas .p-type { color: #c4b5fd; font-weight: 500; font-size: 11px; }#sec-atlas .p-dir { font-size: 10px; color: #475569; }#sec-atlas /* ===== LEARNING ENGINE ===== */
+  .engine-box {
+    background: #0a0f1e; border: 0.5px solid #1e293b;
+    border-radius: 12px; padding: 16px; margin-bottom: 8px;
+  }#sec-atlas .engine-title { font-size: 13px; font-weight: 600; color: #93c5fd; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }#sec-atlas .engine-steps { display: flex; flex-direction: column; gap: 6px; }#sec-atlas .engine-step {
+    display: flex; gap: 10px; align-items: flex-start;
+    padding: 8px 10px; background: #0f172a; border-radius: 7px;
+  }#sec-atlas .e-num {
+    font-size: 10px; font-weight: 700; color: #1d4ed8;
+    background: #1d4ed811; border-radius: 4px;
+    padding: 2px 6px; flex-shrink: 0; margin-top: 1px;
+  }#sec-atlas .e-text { font-size: 11px; color: #94a3b8; line-height: 1.5; }#sec-atlas .e-text strong { color: #cbd5e1; font-weight: 500; }#sec-atlas /* ===== PRIVACY GUARDRAILS ===== */
+  .guardrails { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; }#sec-atlas .guardrail {
+    background: #0f0a1e; border: 0.5px solid #7c3aed22;
+    border-radius: 10px; padding: 12px;
+  }#sec-atlas .g-icon { font-size: 18px; margin-bottom: 6px; }#sec-atlas .g-title { font-size: 12px; font-weight: 500; color: #c4b5fd; margin-bottom: 4px; }#sec-atlas .g-desc { font-size: 11px; color: #5b4a8a; line-height: 1.5; }#sec-atlas /* ===== TECH STACK ===== */
+  .stack-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 8px; }#sec-atlas .stack-card {
+    background: #0f172a; border: 0.5px solid #1e293b;
+    border-radius: 8px; padding: 12px;
+  }#sec-atlas .stack-layer { font-size: 9px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #475569; margin-bottom: 5px; }#sec-atlas .stack-items { display: flex; flex-direction: column; gap: 3px; }#sec-atlas .stack-item { font-size: 11px; color: #64748b; font-family: monospace; }#sec-atlas .stack-item .arrow { color: #334155; }#sec-atlas /* ===== THE SOUL BOX ===== */
+  .soul {
+    background: linear-gradient(135deg, #0f0a1e, #0a1a0f);
+    border: 0.5px solid #7c3aed55;
+    border-radius: 12px; padding: 18px; margin-top: 1.5rem;
+  }#sec-atlas .soul-title { font-size: 15px; font-weight: 600; color: #a78bfa; margin-bottom: 8px; }#sec-atlas .soul-desc { font-size: 12px; color: #64748b; line-height: 1.7; }#sec-atlas .soul-desc strong { color: #94a3b8; font-weight: 500; }
+
+
+/* ===== governance ===== */
+#sec-governance * { box-sizing: border-box; margin: 0; padding: 0; }#sec-governance {
+    font-family: system-ui, -apple-system, sans-serif;
+    background: #080810; color: #e2e8f0;
+    padding: 2rem 1.5rem;
+  }#sec-governance h1 { font-size: 22px; font-weight: 600; color: #fff; margin-bottom: 4px; }#sec-governance .subtitle { font-size: 13px; color: #475569; margin-bottom: 2rem; }#sec-governance h2 { font-size: 15px; font-weight: 500; color: #f87171; margin-bottom: 12px; }#sec-governance h2.blue { color: #93c5fd; }#sec-governance h2.amber { color: #fcd34d; }#sec-governance h2.green { color: #4ade80; }#sec-governance .section-label {
+    font-size: 9px; font-weight: 700; letter-spacing: 0.14em;
+    text-transform: uppercase; color: #334155; margin-bottom: 10px;
+  }#sec-governance hr { border: none; border-top: 0.5px solid #1e293b; margin: 2rem 0; }#sec-governance /* ===== WARNING BANNER ===== */
+  .warning-banner {
+    background: #1a0505; border: 1px solid #dc2626;
+    border-radius: 12px; padding: 18px 20px; margin-bottom: 2rem;
+    display: flex; gap: 14px; align-items: flex-start;
+  }#sec-governance .warn-icon { font-size: 28px; flex-shrink: 0; }#sec-governance .warn-title { font-size: 15px; font-weight: 700; color: #f87171; margin-bottom: 6px; }#sec-governance .warn-body { font-size: 12px; color: #9f4040; line-height: 1.7; }#sec-governance .warn-body strong { color: #fca5a5; font-weight: 500; }#sec-governance /* ===== PRIVILEGE TIERS ===== */
+  .priv-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px; margin-bottom: 1.5rem; }#sec-governance .priv-card {
+    border-radius: 10px; padding: 14px;
+    border: 0.5px solid transparent; position: relative;
+  }#sec-governance .priv-tier { font-size: 9px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 5px; }#sec-governance .priv-name { font-size: 13px; font-weight: 600; margin-bottom: 4px; }#sec-governance .priv-desc { font-size: 11px; line-height: 1.5; opacity: 0.75; margin-bottom: 8px; }#sec-governance .priv-can { display: flex; flex-direction: column; gap: 3px; }#sec-governance .priv-item { font-size: 10px; display: flex; gap: 5px; align-items: flex-start; }#sec-governance .can { color: #4ade80; }#sec-governance .cannot { color: #ef4444; }#sec-governance .tier-viewer { background: #0f172a; border-color: #1e293b; color: #94a3b8; }#sec-governance .tier-viewer .priv-tier { color: #475569; }#sec-governance .tier-viewer .priv-name { color: #94a3b8; }#sec-governance .tier-operator { background: #0f1f3d; border-color: #1d4ed833; color: #93c5fd; }#sec-governance .tier-operator .priv-tier { color: #1d4ed8; }#sec-governance .tier-operator .priv-name { color: #93c5fd; }#sec-governance .tier-admin { background: #1c1208; border-color: #92400e44; color: #fcd34d; }#sec-governance .tier-admin .priv-tier { color: #d97706; }#sec-governance .tier-admin .priv-name { color: #fcd34d; }#sec-governance .tier-superadmin {
+    background: #1a0505; border-color: #dc262666;
+    color: #fca5a5;
+    box-shadow: 0 0 20px #dc262611;
+  }#sec-governance .tier-superadmin .priv-tier { color: #dc2626; }#sec-governance .tier-superadmin .priv-name { color: #f87171; }#sec-governance .tier-locked {
+    background: #0a0208; border-color: #7c3aed33;
+    color: #c4b5fd;
+    box-shadow: 0 0 20px #7c3aed0a;
+  }#sec-governance .tier-locked .priv-tier { color: #7c3aed; }#sec-governance .tier-locked .priv-name { color: #a78bfa; }#sec-governance /* ===== ERASURE PROCEDURE ===== */
+  .procedure { display: flex; flex-direction: column; gap: 0; }#sec-governance .proc-step { display: flex; gap: 0; align-items: stretch; }#sec-governance .proc-left {
+    width: 40px; flex-shrink: 0;
+    display: flex; flex-direction: column; align-items: center;
+  }#sec-governance .proc-circle {
+    width: 32px; height: 32px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; flex-shrink: 0; z-index: 1;
+  }#sec-governance .proc-vline { width: 1px; flex: 1; margin: 0 auto; }#sec-governance .proc-body {
+    flex: 1; margin-left: 10px; margin-bottom: 10px;
+    border-radius: 10px; padding: 12px 14px;
+  }#sec-governance .proc-title { font-size: 12px; font-weight: 600; margin-bottom: 4px; }#sec-governance .proc-detail { font-size: 11px; line-height: 1.6; opacity: 0.75; }#sec-governance .proc-tag {
+    display: inline-block; font-size: 9px; font-weight: 700;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    padding: 2px 7px; border-radius: 4px; margin-top: 6px;
+  }#sec-governance .step-gate .proc-circle { background: #1c1208; color: #fcd34d; border: 1px solid #92400e; }#sec-governance .step-gate .proc-vline { background: #1c1208; }#sec-governance .step-gate .proc-body { background: #1c1208; border: 0.5px solid #92400e44; }#sec-governance .step-gate .proc-title { color: #fcd34d; }#sec-governance .step-gate .proc-tag { background: #92400e22; color: #d97706; }#sec-governance .step-danger .proc-circle { background: #1a0505; color: #f87171; border: 1px solid #dc2626; }#sec-governance .step-danger .proc-vline { background: #1a0505; }#sec-governance .step-danger .proc-body { background: #1a0505; border: 0.5px solid #dc262644; }#sec-governance .step-danger .proc-title { color: #f87171; }#sec-governance .step-danger .proc-tag { background: #dc262622; color: #ef4444; }#sec-governance .step-crypto .proc-circle { background: #0f0a1e; color: #c4b5fd; border: 1px solid #7c3aed; }#sec-governance .step-crypto .proc-vline { background: #0f0a1e; }#sec-governance .step-crypto .proc-body { background: #0f0a1e; border: 0.5px solid #7c3aed44; }#sec-governance .step-crypto .proc-title { color: #c4b5fd; }#sec-governance .step-crypto .proc-tag { background: #7c3aed22; color: #a78bfa; }#sec-governance .step-final .proc-circle { background: #14532d; color: #4ade80; border: 1px solid #16a34a; }#sec-governance .step-final .proc-vline { background: transparent; }#sec-governance .step-final .proc-body { background: #14532d22; border: 0.5px solid #16a34a44; }#sec-governance .step-final .proc-title { color: #4ade80; }#sec-governance .step-final .proc-tag { background: #16a34a22; color: #4ade80; }#sec-governance /* ===== IMMUTABLE AUDIT ===== */
+  .audit-box {
+    background: #0a0f1e; border: 0.5px solid #1e293b;
+    border-radius: 12px; overflow: hidden; margin-bottom: 1rem;
+  }#sec-governance .audit-header {
+    background: #0f172a; padding: 10px 14px;
+    font-size: 11px; font-weight: 600; color: #60a5fa;
+    display: flex; align-items: center; gap: 8px;
+    border-bottom: 0.5px solid #1e293b;
+  }#sec-governance .audit-body { padding: 12px 14px; }#sec-governance .audit-field { display: flex; gap: 10px; margin-bottom: 6px; font-size: 11px; }#sec-governance .audit-key { color: #475569; min-width: 160px; flex-shrink: 0; font-family: monospace; }#sec-governance .audit-val { color: #94a3b8; font-family: monospace; }#sec-governance .audit-val.red { color: #f87171; }#sec-governance .audit-val.green { color: #4ade80; }#sec-governance .audit-val.amber { color: #fcd34d; }#sec-governance .audit-val.purple { color: #c4b5fd; }#sec-governance /* ===== WHAT IS JAILED ===== */
+  .jail-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; }#sec-governance .jail-card {
+    background: #0a0208; border: 0.5px solid #7c3aed33;
+    border-radius: 10px; padding: 12px;
+  }#sec-governance .jail-icon { font-size: 18px; margin-bottom: 6px; }#sec-governance .jail-title { font-size: 12px; font-weight: 500; color: #c4b5fd; margin-bottom: 4px; }#sec-governance .jail-desc { font-size: 11px; color: #5b4a8a; line-height: 1.5; }#sec-governance /* ===== WHAT IS NEVER ERASABLE ===== */
+  .never-table { width: 100%; border-collapse: collapse; }#sec-governance .never-table th {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+    color: #475569; padding: 8px 10px; text-align: left;
+    border-bottom: 0.5px solid #1e293b;
+  }#sec-governance .never-table td {
+    font-size: 11px; color: #94a3b8; padding: 8px 10px;
+    border-bottom: 0.5px solid #0f172a; vertical-align: top;
+  }#sec-governance .never-table tr:last-child td { border-bottom: none; }#sec-governance .never-reason { color: #f87171; font-size: 10px; }#sec-governance /* ===== COMPARISON ===== */
+  .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }#sec-governance .compare-bad { background: #1a0505; border: 0.5px solid #dc262633; border-radius: 10px; padding: 14px; }#sec-governance .compare-good { background: #0f1f0f; border: 0.5px solid #16a34a33; border-radius: 10px; padding: 14px; }#sec-governance .compare-label { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 8px; }#sec-governance .compare-bad .compare-label { color: #dc2626; }#sec-governance .compare-good .compare-label { color: #16a34a; }#sec-governance .compare-items { display: flex; flex-direction: column; gap: 5px; }#sec-governance .compare-item { font-size: 11px; color: #94a3b8; display: flex; gap: 6px; }
+
+  @media (max-width: 500px) {#sec-governance .compare-grid { grid-template-columns: 1fr; }#sec-governance .priv-grid { grid-template-columns: 1fr; }
+  }
+
+</style>
+</head>
+<body>
+
+<div class="progress" id="progress"></div>
+
+<!-- COVER -->
+<div class="cover">
+  <div class="cover-eyebrow">Master System Document · Confidential</div>
+  <div class="cover-title">LabMind</div>
+  <div class="cover-sub">The agentic intelligence layer for laboratory information systems — sitting on top of any existing LIS, reasoning across the full specimen-to-sign-out workflow.</div>
+  <div class="cover-meta">
+    <span class="cover-chip">🧪 Healthcare AI</span>
+    <span class="cover-chip">🤖 Agentic system</span>
+    <span class="cover-chip">🔒 ADHICS · NABH · ISO 15189 ready</span>
+    <span class="cover-chip">🌍 UAE · India · GCC</span>
+    <span class="cover-chip">🎯 Hub71+ AI — Cohort 20</span>
+  </div>
+  <div class="cover-tagline">Most AI in hospitals is stateless — the same on day 300 as day 1. LabMind learns your lab, and that accumulated intelligence is the moat.</div>
+</div>
+
+<!-- STICKY NAV -->
+<nav class="topnav" id="topnav">
+<a href="#sec-overview" class="navlink" data-target="sec-overview" style="--accent:#1d9e75">01 · How It Works</a>
+<a href="#sec-hierarchy" class="navlink" data-target="sec-hierarchy" style="--accent:#7c3aed">02 · Agent Hierarchy</a>
+<a href="#sec-security" class="navlink" data-target="sec-security" style="--accent:#1d4ed8">03 · Security</a>
+<a href="#sec-atlas" class="navlink" data-target="sec-atlas" style="--accent:#a78bfa">04 · ATLAS Intelligence</a>
+<a href="#sec-governance" class="navlink" data-target="sec-governance" style="--accent:#dc2626">05 · Memory Governance</a>
+</nav>
+
+<!-- SECTIONS -->
+<section id="sec-overview" class="doc-section" data-accent="#1d9e75">
+
+
+<h1>LabMind</h1>
+<p class="subtitle">Agentic intelligence layer for laboratory information systems — system architecture</p>
+
+<!-- LAYER 1: Data Sources -->
+<div class="layer-label">Layer 1 — What LabMind reads from</div>
+<div class="sources-grid">
+  <div class="source-box">
+    <div class="source-icon">🧪</div>
+    <div class="source-name">LIS / HIS</div>
+    <div class="source-sub">Existing lab system</div>
+  </div>
+  <div class="source-box">
+    <div class="source-icon">📋</div>
+    <div class="source-name">Specimen data</div>
+    <div class="source-sub">Accession records</div>
+  </div>
+  <div class="source-box">
+    <div class="source-icon">👤</div>
+    <div class="source-name">Patient record</div>
+    <div class="source-sub">Clinical history</div>
+  </div>
+  <div class="source-box">
+    <div class="source-icon">⚙️</div>
+    <div class="source-name">Instrument feeds</div>
+    <div class="source-sub">Analyzer outputs</div>
+  </div>
+  <div class="source-box">
+    <div class="source-icon">📊</div>
+    <div class="source-name">Protocol library</div>
+    <div class="source-sub">Lab SOPs</div>
+  </div>
+</div>
+
+<div class="arrow-down">↓<span class="arrow-label">HL7 / FHIR / REST API</span></div>
+
+<!-- LAYER 2: Integration Bridge -->
+<div class="layer-label">Layer 2 — How LabMind connects</div>
+<div class="bridge">
+  <div class="bridge-icon">🔌</div>
+  <div>
+    <div class="bridge-title">LabMind Integration Bridge</div>
+    <div class="bridge-sub">Sits on top of your existing LIS — no replacement required</div>
+    <div class="bridge-tags">
+      <span class="bridge-tag">HL7 v2/v3</span>
+      <span class="bridge-tag">FHIR R4</span>
+      <span class="bridge-tag">REST API</span>
+      <span class="bridge-tag">CSV/flat-file fallback</span>
+      <span class="bridge-tag">Read-only mode</span>
+    </div>
+  </div>
+</div>
+
+<div class="arrow-down">↓<span class="arrow-label">Structured event stream</span></div>
+
+<!-- LAYER 3: Agent Engine -->
+<div class="layer-label">Layer 3 — The agent engine (what LabMind thinks and does)</div>
+<div class="engine">
+  <div class="engine-header">
+    🤖 Specialized AI agents — each owns one part of the workflow
+  </div>
+  <div class="agents-grid">
+    <div class="agent-card">
+      <div class="agent-name"><span class="agent-dot dot-green"></span>Specimen tracker</div>
+      <div class="agent-desc">Monitors accession status in real time, flags delays before they breach TAT thresholds</div>
+    </div>
+    <div class="agent-card">
+      <div class="agent-name"><span class="agent-dot dot-amber"></span>TAT alert agent</div>
+      <div class="agent-desc">Calculates expected completion, escalates automatically when timeline at risk</div>
+    </div>
+    <div class="agent-card">
+      <div class="agent-name"><span class="agent-dot dot-coral"></span>Critical value router</div>
+      <div class="agent-desc">Detects panic values, identifies the right clinician, sends alert with acknowledgement loop</div>
+    </div>
+    <div class="agent-card">
+      <div class="agent-name"><span class="agent-dot dot-blue"></span>Report pre-populator</div>
+      <div class="agent-desc">Reads clinical history + specimen type, generates structured report shell for pathologist review</div>
+    </div>
+    <div class="agent-card">
+      <div class="agent-name"><span class="agent-dot dot-purple"></span>Protocol checker</div>
+      <div class="agent-desc">Validates that correct stains, fixation, and processing steps are assigned per specimen type</div>
+    </div>
+    <div class="agent-card">
+      <div class="agent-name"><span class="agent-dot dot-teal"></span>Clinician communicator</div>
+      <div class="agent-desc">Sends structured result summaries to referring doctors, tracks delivery and read receipts</div>
+    </div>
+  </div>
+</div>
+
+<div class="arrow-down">↓<span class="arrow-label">Actions and outputs</span></div>
+
+<!-- LAYER 4: Outputs -->
+<div class="layer-label">Layer 4 — What LabMind produces</div>
+<div class="outputs-grid">
+  <div class="output-box">
+    <div class="output-title">📨 Alerts</div>
+    <div class="output-desc">SMS, email, or in-app — routed to the right person, not a generic inbox</div>
+  </div>
+  <div class="output-box">
+    <div class="output-title">📝 Report shells</div>
+    <div class="output-desc">Pre-filled pathology report templates ready for pathologist sign-off</div>
+  </div>
+  <div class="output-box">
+    <div class="output-title">📈 TAT dashboard</div>
+    <div class="output-desc">Real-time lab-wide turnaround visibility for lab directors</div>
+  </div>
+  <div class="output-box">
+    <div class="output-title">✅ Audit log</div>
+    <div class="output-desc">Every agent action logged — who was notified, when, what was changed</div>
+  </div>
+  <div class="output-box">
+    <div class="output-title">📋 Compliance reports</div>
+    <div class="output-desc">Auto-generated for accreditation bodies (CAP, ISO 15189, NABL)</div>
+  </div>
+</div>
+
+<!-- Key design principle -->
+<div class="flow-note">
+  <div class="flow-note-title">Core design principle — non-destructive by default</div>
+  <div class="flow-note-body">LabMind never writes directly to the LIS without human approval. Every agent action is either an alert, a suggestion, or a pre-filled draft. The pathologist and lab director stay in control — LabMind reduces the cognitive load, not the human oversight.</div>
+</div>
+
+<!-- Concrete scenario -->
+<div class="scenario">
+  <div class="scenario-title">Example: a biopsy arrives at 9am — here is what LabMind does</div>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-text"><strong>Specimen registered in LIS</strong> — LabMind reads the accession event via HL7 feed within seconds</div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-text"><strong>Protocol checker fires</strong> — reads specimen type (endoscopic biopsy, colon), assigns correct fixation protocol, flags if container type is wrong</div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-text"><strong>TAT clock starts</strong> — expected sign-out calculated based on lab calendar and current workload, lab director dashboard updates</div>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-text"><strong>Report shell generated</strong> — clinical history parsed, relevant prior biopsies surfaced, structured report template pre-filled and waiting for pathologist</div>
+    </div>
+    <div class="step">
+      <div class="step-num">5</div>
+      <div class="step-text"><strong>Pathologist signs out</strong> — report finalized; clinician communicator sends structured summary to referring gastroenterologist with read-receipt tracking</div>
+    </div>
+    <div class="step">
+      <div class="step-num">6</div>
+      <div class="step-text"><strong>Everything logged</strong> — full audit trail written, TAT recorded, compliance metrics updated automatically</div>
+    </div>
+  </div>
+</div>
+
+
+</section>
+<section id="sec-hierarchy" class="doc-section" data-accent="#7c3aed">
+
+
+<h1>LabMind — Agent Hierarchy</h1>
+<p class="subtitle">Three-tier agentic system with persistent memory and adaptive intelligence</p>
+
+<!-- ===== HUMAN INTERFACE ===== -->
+<div class="section-label">What the lab person interacts with</div>
+<div class="human-box">
+  <div class="human-icon">👨‍🔬</div>
+  <div>
+    <div class="human-title">Lab Director / Pathologist</div>
+    <div class="human-desc">Talks only to the LabMind Supervisor — one conversational interface, natural language, no dashboards to manage manually</div>
+  </div>
+</div>
+
+<div class="connector">
+  <div class="connector-line"></div>
+  <div class="connector-label">↕ natural language commands & escalations only</div>
+  <div class="connector-line"></div>
+</div>
+
+<!-- ===== TIER 1: SUPERVISOR AGENT ===== -->
+<div class="section-label">Tier 1 — Supervisor (the lab director's AI chief of staff)</div>
+<div class="tier tier-ceo">
+  <div class="tier-line">
+    <div class="tier-badge">Supervisor</div>
+    <div class="tier-content">
+      <div class="node-row">
+        <div class="node" style="border-color: #7c3aed44;">
+          <div class="node-title"><span class="dot dot-purple"></span> LabMind Supervisor Agent</div>
+          <div class="node-desc">The single point of contact for all humans. Receives goals and priorities from the lab director, breaks them into tasks, delegates to Manager Agents, monitors outcomes, and escalates only when a decision genuinely needs a human. Everything else it handles autonomously.</div>
+          <div class="node-tags">
+            <span class="node-tag">goal decomposition</span>
+            <span class="node-tag">cross-domain reasoning</span>
+            <span class="node-tag">escalation logic</span>
+            <span class="node-tag">natural language interface</span>
+            <span class="node-tag">daily briefing generation</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="connector">
+  <div class="connector-line"></div>
+  <div class="connector-label">↕ structured task delegation & status reporting</div>
+  <div class="connector-line"></div>
+</div>
+
+<!-- ===== TIER 2: MANAGER AGENTS ===== -->
+<div class="section-label">Tier 2 — Manager agents (each owns one domain)</div>
+<div class="tier tier-manager">
+  <div class="tier-line">
+    <div class="tier-badge">Managers</div>
+    <div class="tier-content">
+      <div class="node-row">
+        <div class="node">
+          <div class="node-title"><span class="dot dot-blue"></span> Workflow Manager</div>
+          <div class="node-desc">Owns the specimen lifecycle from accession to sign-out. Coordinates tracking, TAT, and protocol workers. Knows the lab's workload patterns and schedules workers accordingly.</div>
+          <div class="node-tags"><span class="node-tag">TAT</span><span class="node-tag">specimen flow</span><span class="node-tag">prioritization</span></div>
+        </div>
+        <div class="node">
+          <div class="node-title"><span class="dot dot-coral"></span> Quality & Safety Manager</div>
+          <div class="node-desc">Owns critical values, error detection, compliance, and QC loops. Never sleeps — monitors for patient safety events 24/7 and escalates with urgency scoring.</div>
+          <div class="node-tags"><span class="node-tag">critical values</span><span class="node-tag">QC</span><span class="node-tag">compliance</span></div>
+        </div>
+        <div class="node">
+          <div class="node-title"><span class="dot dot-teal"></span> Reporting Manager</div>
+          <div class="node-desc">Owns report generation, clinician communication, and result delivery. Tracks acknowledgement loops and flags unread critical reports.</div>
+          <div class="node-tags"><span class="node-tag">report drafts</span><span class="node-tag">delivery</span><span class="node-tag">follow-up</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="connector">
+  <div class="connector-line"></div>
+  <div class="connector-label">↕ specific instructions & real-time results</div>
+  <div class="connector-line"></div>
+</div>
+
+<!-- ===== TIER 3: WORKER AGENTS ===== -->
+<div class="section-label">Tier 3 — Worker agents (do the actual work)</div>
+<div class="tier tier-worker">
+  <div class="tier-line">
+    <div class="tier-badge">Workers</div>
+    <div class="tier-content">
+      <div class="node-row">
+        <div class="node">
+          <div class="node-title"><span class="dot dot-green"></span> Specimen Tracker</div>
+          <div class="node-desc">Watches every specimen in real time. Detects stalls, misroutes, and missing barcodes. Reports to Workflow Manager.</div>
+        </div>
+        <div class="node">
+          <div class="node-title"><span class="dot dot-amber"></span> TAT Monitor</div>
+          <div class="node-desc">Calculates expected completion per specimen, fires early warnings before breaches occur. Reports to Workflow Manager.</div>
+        </div>
+        <div class="node">
+          <div class="node-title"><span class="dot dot-coral"></span> Critical Value Router</div>
+          <div class="node-desc">Detects panic values, finds the right clinician, sends alert, waits for acknowledgement. Reports to Quality Manager.</div>
+        </div>
+        <div class="node">
+          <div class="node-title"><span class="dot dot-blue"></span> Protocol Checker</div>
+          <div class="node-desc">Validates stains, fixation, and processing per specimen type against the lab's SOP library. Reports to Quality Manager.</div>
+        </div>
+        <div class="node">
+          <div class="node-title"><span class="dot dot-purple"></span> Report Pre-populator</div>
+          <div class="node-desc">Reads clinical history, generates structured report shell, surfaces relevant prior cases. Reports to Reporting Manager.</div>
+        </div>
+        <div class="node">
+          <div class="node-title"><span class="dot dot-teal"></span> Clinician Communicator</div>
+          <div class="node-desc">Sends structured result summaries, tracks read receipts, escalates unread critical reports. Reports to Reporting Manager.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr>
+
+<!-- ===== MEMORY & PERSISTENCE ===== -->
+<div class="section-label">Memory & persistent intelligence — what LabMind remembers and learns</div>
+<div class="tier tier-memory">
+  <div class="tier-line">
+    <div class="tier-badge">Memory</div>
+    <div class="tier-content">
+      <div class="memory-grid">
+
+        <div class="mem-card">
+          <div class="mem-icon">🧠</div>
+          <div class="mem-title">Lab Profile Memory</div>
+          <div class="mem-desc">Builds and updates a persistent model of this specific lab — shift patterns, peak hours, instrument quirks, which doctors respond fastest to which channels. Auto-updates every 24h.</div>
+        </div>
+
+        <div class="mem-card">
+          <div class="mem-icon">📈</div>
+          <div class="mem-title">Workflow Pattern Memory</div>
+          <div class="mem-desc">Learns what "normal" TAT looks like per test type, per shift, per season. Detects anomalies against the lab's own baseline — not a generic benchmark.</div>
+        </div>
+
+        <div class="mem-card">
+          <div class="mem-icon">⚠️</div>
+          <div class="mem-title">Error & Near-Miss Memory</div>
+          <div class="mem-desc">Every caught error and near-miss is stored and analyzed. Agents get progressively better at catching the same class of error before it happens.</div>
+        </div>
+
+        <div class="mem-card">
+          <div class="mem-icon">👨‍⚕️</div>
+          <div class="mem-title">Clinician Preference Memory</div>
+          <div class="mem-desc">Learns how each referring doctor prefers to receive results — format, channel, urgency threshold. Personalizes communication per clinician automatically.</div>
+        </div>
+
+        <div class="mem-card">
+          <div class="mem-icon">📋</div>
+          <div class="mem-title">Protocol Evolution Memory</div>
+          <div class="mem-desc">When SOPs change, memory updates propagate across all agents simultaneously. No manual re-training — the system adapts to the new protocol within one shift.</div>
+        </div>
+
+        <div class="mem-card">
+          <div class="mem-icon">🔄</div>
+          <div class="mem-title">Cross-Lab Federation</div>
+          <div class="mem-desc">With consent, aggregate anonymized learnings across all deployed labs. A protocol improvement discovered at one lab benefits the entire network — federated, privacy-preserving.</div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== LEARNING LOOP ===== -->
+<div class="loop-box">
+  <div class="loop-title">🔁 The adaptive learning loop — how LabMind gets smarter over time</div>
+  <div class="loop-steps">
+    <div class="loop-step">Agent acts on a workflow event</div>
+    <div class="loop-arrow">→</div>
+    <div class="loop-step">Outcome is observed & stored in memory</div>
+    <div class="loop-arrow">→</div>
+    <div class="loop-step">Supervisor reviews patterns weekly</div>
+    <div class="loop-arrow">→</div>
+    <div class="loop-step">Worker agent thresholds auto-adjust</div>
+    <div class="loop-arrow">→</div>
+    <div class="loop-step">Lab director sees improvement report</div>
+  </div>
+</div>
+
+<!-- ===== WHAT THE LAB PERSON ACTUALLY SEES ===== -->
+<div class="interface-strip">
+  <div class="interface-title">🖥️ What the lab person actually sees — nothing complicated</div>
+  <div class="interface-items">
+    <div class="interface-item">💬 Chat with the Supervisor in plain language</div>
+    <div class="interface-item">📊 One live dashboard — no configuration</div>
+    <div class="interface-item">🔔 Escalation alerts only — no noise</div>
+    <div class="interface-item">📋 Morning briefing auto-generated daily</div>
+    <div class="interface-item">✅ Approve or override any agent decision</div>
+    <div class="interface-item">📉 Weekly intelligence report — what the system learned</div>
+  </div>
+</div>
+
+
+</section>
+<section id="sec-security" class="doc-section" data-accent="#1d4ed8">
+
+
+<h1>LabMind — Security Architecture</h1>
+<p class="subtitle">How patient data stays safe, private, and regulation-compliant across every market</p>
+
+<!-- CORE PROMISE -->
+<div class="promise">
+  <div class="promise-icon">🔒</div>
+  <div>
+    <div class="promise-title">The non-negotiable design decision</div>
+    <div class="promise-desc">LabMind is a <strong style="color:#e2e8f0;">read-layer-first</strong> system. It observes and assists — it never stores raw patient identifiable information on its own servers. PHI stays inside the hospital's own infrastructure. LabMind works with anonymized event streams and structured metadata, not with the underlying patient records. This is not a feature. It is the architectural foundation.</div>
+  </div>
+</div>
+
+<!-- CORE PRINCIPLES -->
+<div class="section-label">Four security principles (mirrors ADHICS, ISO 15189, NABH)</div>
+<div class="principles">
+  <div class="principle">
+    <div class="p-icon">🔐</div>
+    <div class="p-title">Confidentiality</div>
+    <div class="p-desc">Only authorized roles access specific data layers. Zero cross-patient data leakage by architecture.</div>
+  </div>
+  <div class="principle">
+    <div class="p-icon">✅</div>
+    <div class="p-title">Integrity</div>
+    <div class="p-desc">Every agent action is cryptographically signed. No record can be altered without an audit trail.</div>
+  </div>
+  <div class="principle">
+    <div class="p-icon">⚡</div>
+    <div class="p-title">Availability</div>
+    <div class="p-desc">99.9% uptime SLA. Failover to read-only mode if cloud connectivity drops — lab never goes dark.</div>
+  </div>
+  <div class="principle">
+    <div class="p-icon">📋</div>
+    <div class="p-title">Accountability</div>
+    <div class="p-desc">Every decision made by every agent is logged, timestamped, and attributable. Full audit trail on demand.</div>
+  </div>
+</div>
+
+<hr>
+
+<!-- SECURITY ARCHITECTURE LAYERS -->
+<div class="section-label">Five-layer security stack</div>
+
+<div class="arch-layer layer-perimeter">
+  <div class="arch-header">🛡️ Layer 1 — Network Perimeter</div>
+  <div class="arch-body">
+    <div class="arch-items">
+      <div class="arch-item">🔒 TLS 1.3 encryption in transit</div>
+      <div class="arch-item">🌐 VPN tunnel to hospital network</div>
+      <div class="arch-item">🚧 Web Application Firewall (WAF)</div>
+      <div class="arch-item">📡 API rate limiting & DDoS protection</div>
+      <div class="arch-item">🔍 Intrusion Detection System (IDS)</div>
+      <div class="arch-item">🏠 On-premise gateway option</div>
+    </div>
+  </div>
+</div>
+
+<div class="arch-layer layer-data">
+  <div class="arch-header">🗄️ Layer 2 — Data Security</div>
+  <div class="arch-body">
+    <div class="arch-items">
+      <div class="arch-item">🔑 AES-256 encryption at rest</div>
+      <div class="arch-item">🧩 PHI tokenization before any cloud processing</div>
+      <div class="arch-item">🌍 Data residency — stays in-country</div>
+      <div class="arch-item">🗑️ Automatic PHI purge after processing</div>
+      <div class="arch-item">🔄 Encrypted backups with geo-redundancy</div>
+      <div class="arch-item">📊 Differential privacy for memory/learning layer</div>
+    </div>
+  </div>
+</div>
+
+<div class="arch-layer layer-access">
+  <div class="arch-header">👤 Layer 3 — Identity & Access Control</div>
+  <div class="arch-body">
+    <div class="arch-items">
+      <div class="arch-item">📱 Multi-Factor Authentication (MFA) mandatory</div>
+      <div class="arch-item">🎭 Role-Based Access Control (RBAC)</div>
+      <div class="arch-item">⏰ Session timeout & auto-lock</div>
+      <div class="arch-item">🌍 IP allowlisting per institution</div>
+      <div class="arch-item">🔄 SSO integration with hospital AD/LDAP</div>
+      <div class="arch-item">🚫 Zero-trust architecture — no implicit trust</div>
+    </div>
+  </div>
+</div>
+
+<div class="arch-layer layer-agent">
+  <div class="arch-header">🤖 Layer 4 — Agent-Specific Controls</div>
+  <div class="arch-body">
+    <div class="arch-items">
+      <div class="arch-item">🔒 Each agent operates in isolated sandbox</div>
+      <div class="arch-item">👁️ Human approval required for all write actions</div>
+      <div class="arch-item">📏 Agent permission scope strictly limited by role</div>
+      <div class="arch-item">⚠️ Anomaly detection on agent behavior</div>
+      <div class="arch-item">🛑 Kill-switch per agent without system downtime</div>
+      <div class="arch-item">📋 Every agent decision logged immutably</div>
+    </div>
+  </div>
+</div>
+
+<div class="arch-layer layer-audit">
+  <div class="arch-header">📋 Layer 5 — Audit & Compliance</div>
+  <div class="arch-body">
+    <div class="arch-items">
+      <div class="arch-item">🕐 Immutable audit log — tamper-proof</div>
+      <div class="arch-item">📊 Real-time compliance dashboard</div>
+      <div class="arch-item">🚨 Breach notification within 24–72 hrs</div>
+      <div class="arch-item">📅 Quarterly self-assessments built-in</div>
+      <div class="arch-item">📁 One-click audit export for regulators</div>
+      <div class="arch-item">🔍 Penetration testing — annual third-party</div>
+    </div>
+  </div>
+</div>
+
+<hr>
+
+<!-- DEPLOYMENT OPTIONS -->
+<div class="section-label">Three deployment models — hospital chooses, we support all</div>
+<div class="deploy-grid">
+  <div class="deploy-card">
+    <div class="deploy-badge badge-recommended">Recommended</div>
+    <div class="deploy-title">🏥 On-Premise Gateway</div>
+    <div class="deploy-desc">LabMind gateway server deployed inside the hospital's own network. PHI never leaves the hospital. Only anonymized event metadata goes to the cloud for the AI reasoning layer.</div>
+    <div class="deploy-for">Best for: <span>government hospitals, large private chains</span></div>
+  </div>
+  <div class="deploy-card">
+    <div class="deploy-badge badge-flexible">Flexible</div>
+    <div class="deploy-title">☁️ Private Cloud</div>
+    <div class="deploy-desc">Dedicated single-tenant cloud instance within the country's sovereign cloud (Azure UAE North, AWS Bahrain). Full data residency compliance. No shared infrastructure with other labs.</div>
+    <div class="deploy-for">Best for: <span>mid-size private labs, diagnostic chains</span></div>
+  </div>
+  <div class="deploy-card">
+    <div class="deploy-badge badge-airgapped">High Security</div>
+    <div class="deploy-title">🔌 Air-Gapped Mode</div>
+    <div class="deploy-desc">Full on-premise deployment with no internet connection. All AI models run locally. Memory and learning updates delivered via secure encrypted package monthly. Zero external data flow.</div>
+    <div class="deploy-for">Best for: <span>defence hospitals, ultra-sensitive labs</span></div>
+  </div>
+</div>
+
+<!-- WHAT NEVER LEAVES -->
+<div class="never-box">
+  <div class="never-title">🚫 What NEVER leaves the hospital's infrastructure</div>
+  <div class="never-items">
+    <div class="never-item">Patient name or ID</div>
+    <div class="never-item">Date of birth</div>
+    <div class="never-item">Diagnosis or test results</div>
+    <div class="never-item">Clinician identity</div>
+    <div class="never-item">Raw pathology reports</div>
+    <div class="never-item">Insurance or billing data</div>
+    <div class="never-item">Any PHI field as defined by ADHICS/HIPAA</div>
+  </div>
+</div>
+
+<hr>
+
+<!-- REGULATORY COMPLIANCE -->
+<div class="section-label">Regulatory compliance — built-in, not bolted on</div>
+<div class="reg-grid">
+
+  <div class="reg-card">
+    <div class="reg-flag">🇦🇪</div>
+    <div class="reg-name">ADHICS v2.0</div>
+    <div class="reg-full">Abu Dhabi Healthcare Information & Cyber Security Standard</div>
+    <div class="reg-items">
+      <div class="reg-item"><span class="reg-check">✓</span> Encrypted APIs with authenticated data exchange</div>
+      <div class="reg-item"><span class="reg-check">✓</span> Secure integration with Malaffi & NABIDH</div>
+      <div class="reg-item"><span class="reg-check">✓</span> Breach reporting within 24–72 hours</div>
+      <div class="reg-item"><span class="reg-check">✓</span> Annual audit + quarterly self-assessment</div>
+      <div class="reg-item"><span class="reg-build">→</span> DoH Healthcare CERT participation (Year 1 goal)</div>
+    </div>
+  </div>
+
+  <div class="reg-card">
+    <div class="reg-flag">🇮🇳</div>
+    <div class="reg-name">NABH + NABL</div>
+    <div class="reg-full">National Accreditation Board for Hospitals & Laboratories</div>
+    <div class="reg-items">
+      <div class="reg-item"><span class="reg-check">✓</span> ISO 15189:2022 aligned lab quality framework</div>
+      <div class="reg-item"><span class="reg-check">✓</span> Audit trail supports NABL assessment documentation</div>
+      <div class="reg-item"><span class="reg-check">✓</span> TAT tracking aligns with NABH quality indicators</div>
+      <div class="reg-item"><span class="reg-check">✓</span> Critical value documentation for compliance</div>
+      <div class="reg-item"><span class="reg-build">→</span> DPDPA 2023 data protection compliance (India)</div>
+    </div>
+  </div>
+
+  <div class="reg-card">
+    <div class="reg-flag">🌐</div>
+    <div class="reg-name">ISO 27001 + ISO 15189</div>
+    <div class="reg-full">International security & medical lab standards</div>
+    <div class="reg-items">
+      <div class="reg-item"><span class="reg-check">✓</span> Information security management framework</div>
+      <div class="reg-item"><span class="reg-check">✓</span> Medical lab quality & competence alignment</div>
+      <div class="reg-item"><span class="reg-check">✓</span> ILAC MRA — results accepted globally</div>
+      <div class="reg-item"><span class="reg-check">✓</span> Risk management framework built into agent design</div>
+      <div class="reg-item"><span class="reg-build">→</span> ISO 27001 certification (Year 1 milestone)</div>
+    </div>
+  </div>
+
+  <div class="reg-card">
+    <div class="reg-flag">🌍</div>
+    <div class="reg-name">HIPAA-Ready</div>
+    <div class="reg-full">For expansion into US & international markets</div>
+    <div class="reg-items">
+      <div class="reg-item"><span class="reg-check">✓</span> PHI handling architecture HIPAA-compatible</div>
+      <div class="reg-item"><span class="reg-check">✓</span> BAA-ready for US hospital partnerships</div>
+      <div class="reg-item"><span class="reg-check">✓</span> Audit controls meet HIPAA Security Rule</div>
+      <div class="reg-item"><span class="reg-build">→</span> Formal HIPAA certification as US market approached</div>
+    </div>
+  </div>
+
+</div>
+
+<hr>
+
+<!-- WHAT THIS MEANS FOR THE PITCH -->
+<div class="section-label">What this means for Hub71 and investors</div>
+<div style="background:#fff; border:0.5px solid #e8e8e8; border-radius:10px; padding:16px;">
+  <div style="font-size:13px; font-weight:500; margin-bottom:10px; color:#1a1a1a;">Security is your procurement unlock, not a cost center</div>
+  <div style="display:flex; flex-direction:column; gap:8px;">
+    <div style="font-size:12px; color:#555; line-height:1.6; padding:8px 12px; background:#f9fafb; border-radius:7px; border-left:3px solid #1d4ed8;">
+      <strong>For UAE:</strong> ADHICS compliance is mandatory for licensing in Abu Dhabi. A product that ships ADHICS-ready removes the single biggest procurement blocker for DOH-licensed facilities. This is not a nice-to-have — it is table stakes, and most AI startups entering this market have no idea it exists.
+    </div>
+    <div style="font-size:12px; color:#555; line-height:1.6; padding:8px 12px; background:#f9fafb; border-radius:7px; border-left:3px solid #16a34a;">
+      <strong>For India:</strong> NABL-accredited labs are actively incentivized — they receive 15% higher rates under CGHS. A tool that makes NABL compliance documentation easier is something lab directors will pay for independently of the workflow benefits.
+    </div>
+    <div style="font-size:12px; color:#555; line-height:1.6; padding:8px 12px; background:#f9fafb; border-radius:7px; border-left:3px solid #7c3aed;">
+      <strong>For investors:</strong> Security architecture built to ADHICS/ISO 27001 standard from day one means enterprise sales cycles shorten dramatically. The security question — usually the reason a deal stalls for 6 months — is answered before it is asked.
+    </div>
+  </div>
+</div>
+
+
+</section>
+<section id="sec-atlas" class="doc-section" data-accent="#a78bfa">
+
+
+<!-- NAMEPLATE -->
+<div style="margin-bottom:2rem;">
+  <div style="font-size:10px; color:#334155; letter-spacing:0.1em; text-transform:uppercase; margin-bottom:6px;">LabMind Internal System Specification</div>
+  <h1>ATLAS</h1>
+  <p class="subtitle">Adaptive Temporal Learning & Agent Supervisory System — the persistent intelligence core of LabMind</p>
+</div>
+
+<div class="nameplate">
+  <div class="nameplate-icon">🧬</div>
+  <div>
+    <div class="nameplate-name">ATLAS</div>
+    <div class="nameplate-expand">Adaptive Temporal Learning & Agent Supervisory System</div>
+    <div class="nameplate-desc">ATLAS is the cognitive backbone of LabMind. It is not an agent — it is the system that makes all agents smarter over time. Every observation made, every error caught, every workflow completed feeds back into ATLAS. It remembers, reasons, adapts, and grows — specific to the lab it is deployed in, continuously and autonomously.</div>
+  </div>
+</div>
+
+<hr>
+
+<!-- MEMORY ARCHITECTURE -->
+<h2>01 — Memory Architecture</h2>
+<div class="section-label">Five distinct memory types — each with different persistence, update frequency, and purpose</div>
+
+<div class="mem-grid">
+
+  <div class="mem-card mem-episodic">
+    <div class="mem-label">Episodic Memory</div>
+    <div class="mem-title">What happened, when, and what resulted</div>
+    <div class="mem-desc">Every specific event in the lab — a critical value routed, a TAT breach caught, a report pre-populated — is stored as a timestamped episode with context, action taken, and outcome. ATLAS uses this to reason about patterns across time.</div>
+    <div class="mem-tech">
+      <div class="mem-tech-label">Storage</div>
+      <div class="mem-tags">
+        <span class="mem-tag">Vector DB (pgvector)</span>
+        <span class="mem-tag">Time-series index</span>
+        <span class="mem-tag">90-day rolling window</span>
+        <span class="mem-tag">Anonymized embeddings</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="mem-card mem-semantic">
+    <div class="mem-label">Semantic Memory</div>
+    <div class="mem-title">What this lab knows — its permanent knowledge base</div>
+    <div class="mem-desc">The lab's SOPs, protocol library, instrument reference ranges, clinician directory, and institutional rules. This is the stable, structured knowledge ATLAS draws on to make context-aware decisions. Updated when protocols change.</div>
+    <div class="mem-tech">
+      <div class="mem-tech-label">Storage</div>
+      <div class="mem-tags">
+        <span class="mem-tag">Structured knowledge graph</span>
+        <span class="mem-tag">Versioned SOP store</span>
+        <span class="mem-tag">Permanent with diffs</span>
+        <span class="mem-tag">Full-text + semantic search</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="mem-card mem-procedural">
+    <div class="mem-label">Procedural Memory</div>
+    <div class="mem-title">How to do things — learned skills that improve</div>
+    <div class="mem-desc">The agents' learned execution strategies — how to route a critical value at 3am vs 3pm, how to prioritize a backlog during a busy Monday, which instrument is running slow on which day. Skills that were learned by doing and improved by feedback.</div>
+    <div class="mem-tech">
+      <div class="mem-tech-label">Storage</div>
+      <div class="mem-tags">
+        <span class="mem-tag">Reinforcement signal store</span>
+        <span class="mem-tag">Policy weight updates</span>
+        <span class="mem-tag">A/B outcome tracking</span>
+        <span class="mem-tag">Weekly retraining cycle</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="mem-card mem-working">
+    <div class="mem-label">Working Memory</div>
+    <div class="mem-title">What is happening right now — live context window</div>
+    <div class="mem-desc">The active state of every specimen in the lab at this moment — what stage it's at, who touched it last, what's outstanding, what's at risk. Cleared and rebuilt every shift. This is what agents read before every decision.</div>
+    <div class="mem-tech">
+      <div class="mem-tech-label">Storage</div>
+      <div class="mem-tags">
+        <span class="mem-tag">Redis in-memory cache</span>
+        <span class="mem-tag">Real-time event stream</span>
+        <span class="mem-tag">Shift-scoped TTL</span>
+        <span class="mem-tag">Sub-second latency</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="mem-card mem-collective">
+    <div class="mem-label">Collective Memory</div>
+    <div class="mem-title">What the network of labs has learned — federated intelligence</div>
+    <div class="mem-desc">Anonymized, aggregated learnings across all LabMind-deployed labs. A protocol improvement discovered in Dubai propagates — with consent — to labs in Mumbai. No patient data. No lab identity. Only distilled intelligence.</div>
+    <div class="mem-tech">
+      <div class="mem-tech-label">Storage</div>
+      <div class="mem-tags">
+        <span class="mem-tag">Federated learning model</span>
+        <span class="mem-tag">Differential privacy</span>
+        <span class="mem-tag">Monthly sync cycle</span>
+        <span class="mem-tag">Opt-in per lab</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<hr>
+
+<!-- GROWTH STAGES -->
+<h2>02 — Growth Stages</h2>
+<div class="section-label">ATLAS grows through five stages — automatically, without manual configuration</div>
+
+<div class="stages">
+
+  <div class="stage s1">
+    <div class="stage-num">
+      <div class="stage-circle">1</div>
+      <div class="stage-line"></div>
+    </div>
+    <div class="stage-body">
+      <div class="stage-title">OBSERVE — Days 1 to 14</div>
+      <div class="stage-time">First two weeks after deployment</div>
+      <div class="stage-items">
+        <div class="stage-item">Silently reads all LIS events — no actions taken yet</div>
+        <div class="stage-item">Builds baseline model of lab's normal rhythm — TAT, volume, shift patterns</div>
+        <div class="stage-item">Learns clinician communication preferences from existing records</div>
+        <div class="stage-item">Maps instrument performance patterns and error frequencies</div>
+        <div class="stage-item">Semantic memory populated from uploaded SOP library</div>
+        <div class="stage-item">Zero risk — read-only, no interference with existing workflow</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="stage s2">
+    <div class="stage-num">
+      <div class="stage-circle">2</div>
+      <div class="stage-line"></div>
+    </div>
+    <div class="stage-body">
+      <div class="stage-title">SUGGEST — Weeks 3 to 8</div>
+      <div class="stage-time">Months 1 and 2</div>
+      <div class="stage-items">
+        <div class="stage-item">Begins generating suggestions — lab staff can accept or dismiss each one</div>
+        <div class="stage-item">Every accept/dismiss is a learning signal stored in procedural memory</div>
+        <div class="stage-item">TAT predictions become active — early warning alerts start firing</div>
+        <div class="stage-item">Report pre-population drafts presented to pathologists for review</div>
+        <div class="stage-item">ATLAS calibrates confidence thresholds based on acceptance rates</div>
+        <div class="stage-item">Daily briefing report begins — lab director sees patterns for first time</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="stage s3">
+    <div class="stage-num">
+      <div class="stage-circle">3</div>
+      <div class="stage-line"></div>
+    </div>
+    <div class="stage-body">
+      <div class="stage-title">ACT — Months 3 to 6</div>
+      <div class="stage-time">Autonomous operation begins</div>
+      <div class="stage-items">
+        <div class="stage-item">High-confidence actions execute autonomously — no human approval needed per-action</div>
+        <div class="stage-item">Critical value routing, TAT escalations, clinician notifications run fully automated</div>
+        <div class="stage-item">ATLAS now has 90 days of episodic memory to reason against</div>
+        <div class="stage-item">Anomaly detection fires against lab's own baseline — not generic benchmarks</div>
+        <div class="stage-item">Weekly intelligence report shows what ATLAS learned and changed that week</div>
+        <div class="stage-item">Lab director interaction drops to exception handling only</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="stage s4">
+    <div class="stage-num">
+      <div class="stage-circle">4</div>
+      <div class="stage-line"></div>
+    </div>
+    <div class="stage-body">
+      <div class="stage-title">OPTIMIZE — Months 6 to 12</div>
+      <div class="stage-time">Active optimization of lab performance</div>
+      <div class="stage-items">
+        <div class="stage-item">ATLAS begins proactively identifying systemic inefficiencies — not just reacting</div>
+        <div class="stage-item">Suggests protocol changes, staffing adjustments, instrument maintenance schedules</div>
+        <div class="stage-item">Collective memory sync begins — anonymized learnings shared with network</div>
+        <div class="stage-item">Predictive workload modeling — anticipates busy periods 48 hours ahead</div>
+        <div class="stage-item">Compliance documentation auto-generated for NABL/ADHICS audits</div>
+        <div class="stage-item">ROI dashboard shows measurable impact vs pre-deployment baseline</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="stage s5">
+    <div class="stage-num">
+      <div class="stage-circle">5</div>
+      <div class="stage-line"></div>
+    </div>
+    <div class="stage-body">
+      <div class="stage-title">EVOLVE — Year 2 and beyond</div>
+      <div class="stage-time">Continuous self-improvement, no ceiling</div>
+      <div class="stage-items">
+        <div class="stage-item">ATLAS rewrites its own agent thresholds based on outcome data</div>
+        <div class="stage-item">New agent modules can be added — ATLAS trains them using existing memory</div>
+        <div class="stage-item">Cross-lab pattern recognition surfaces best practices automatically</div>
+        <div class="stage-item">Predictive diagnostic support — flags unusual patterns for pathologist attention</div>
+        <div class="stage-item">ATLAS becomes an institutional knowledge repository — survives staff turnover</div>
+        <div class="stage-item">Each lab's ATLAS is unique — shaped entirely by its own history and context</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<hr>
+
+<!-- INTELLIGENCE MODULES -->
+<h2>03 — Core Intelligence Modules</h2>
+<div class="section-label">What ATLAS actually runs under the hood</div>
+
+<div class="modules">
+
+  <div class="module">
+    <div class="module-icon">🔮</div>
+    <div class="module-title">Pattern Recognition Engine</div>
+    <div class="module-desc">Continuously scans episodic memory for recurring patterns — instrument failures on specific days, TAT spikes during shift handovers, critical values from specific wards. Surfaces patterns before they become problems.</div>
+    <div class="module-spec">runs: every 4 hours | lookback: 90 days</div>
+  </div>
+
+  <div class="module">
+    <div class="module-icon">⚖️</div>
+    <div class="module-title">Confidence Calibration Engine</div>
+    <div class="module-desc">Every agent suggestion has a confidence score. ATLAS tracks which confidence levels lead to correct outcomes and auto-adjusts thresholds weekly. Over time agents act only when they are reliably right.</div>
+    <div class="module-spec">runs: weekly | signal: accept/dismiss/override</div>
+  </div>
+
+  <div class="module">
+    <div class="module-icon">🧭</div>
+    <div class="module-title">Context Assembler</div>
+    <div class="module-desc">Before any agent acts, ATLAS assembles a rich context packet — current working memory + relevant episodic history + applicable semantic rules. Agents never act blind. Every decision is context-aware.</div>
+    <div class="module-spec">runs: per-event | latency: &lt;200ms</div>
+  </div>
+
+  <div class="module">
+    <div class="module-icon">📡</div>
+    <div class="module-title">Anomaly Detector</div>
+    <div class="module-desc">Maintains a dynamic model of "normal" for this specific lab. Fires when anything deviates — not against industry benchmarks, but against this lab's own established baseline. Reduces false alarms dramatically over time.</div>
+    <div class="module-spec">runs: continuous | model: lab-specific LSTM</div>
+  </div>
+
+  <div class="module">
+    <div class="module-icon">🔄</div>
+    <div class="module-title">Protocol Drift Detector</div>
+    <div class="module-desc">Detects when actual lab behavior diverges from written SOPs — and flags this to the lab director. Catches the gap between what the protocol says and what people actually do. Critical for audit readiness.</div>
+    <div class="module-spec">runs: daily | compares: actual vs documented</div>
+  </div>
+
+  <div class="module">
+    <div class="module-icon">🌐</div>
+    <div class="module-title">Federated Sync Engine</div>
+    <div class="module-desc">With lab consent, distills learnings into anonymized model updates and syncs with the LabMind network. Receives collective intelligence updates from the network. Privacy-preserving — no patient data, no lab identity.</div>
+    <div class="module-spec">runs: monthly | method: federated learning</div>
+  </div>
+
+</div>
+
+<hr>
+
+<!-- AGENT COMMUNICATION PROTOCOL -->
+<h2>04 — Agent Communication Protocol</h2>
+<div class="section-label">How ATLAS talks to agents — structured, auditable, traceable</div>
+
+<table class="protocol-table" style="background:#0f172a; border-radius:10px; overflow:hidden; width:100%;">
+  <tr>
+    <th>Message Type</th>
+    <th>Direction</th>
+    <th>Contains</th>
+    <th>ATLAS Action</th>
+  </tr>
+  <tr>
+    <td><span class="p-type">CONTEXT_REQUEST</span></td>
+    <td><span class="p-dir">Agent → ATLAS</span></td>
+    <td>Event ID, agent type, required memory scopes</td>
+    <td>Assembles context packet from all 5 memory types, returns in &lt;200ms</td>
+  </tr>
+  <tr>
+    <td><span class="p-type">ACTION_TAKEN</span></td>
+    <td><span class="p-dir">Agent → ATLAS</span></td>
+    <td>Action type, confidence score, context used, timestamp</td>
+    <td>Stores in episodic memory, updates working memory, logs to audit trail</td>
+  </tr>
+  <tr>
+    <td><span class="p-type">OUTCOME_SIGNAL</span></td>
+    <td><span class="p-dir">Agent → ATLAS</span></td>
+    <td>Action ID, outcome (accepted/dismissed/overridden), feedback text</td>
+    <td>Updates procedural memory, recalibrates confidence thresholds</td>
+  </tr>
+  <tr>
+    <td><span class="p-type">ESCALATE</span></td>
+    <td><span class="p-dir">Agent → ATLAS → Human</span></td>
+    <td>Urgency level, reason, recommended action, confidence</td>
+    <td>Routes to Supervisor Agent, generates human-readable alert, logs decision chain</td>
+  </tr>
+  <tr>
+    <td><span class="p-type">PATTERN_ALERT</span></td>
+    <td><span class="p-dir">ATLAS → Supervisor</span></td>
+    <td>Pattern description, frequency, affected specimens, recommendation</td>
+    <td>Initiates proactive workflow — may spawn new agent task or escalate to human</td>
+  </tr>
+  <tr>
+    <td><span class="p-type">MEMORY_UPDATE</span></td>
+    <td><span class="p-dir">ATLAS → All Agents</span></td>
+    <td>Updated thresholds, new SOP version, calibrated confidence scores</td>
+    <td>Broadcast to all active agents — takes effect on next event cycle</td>
+  </tr>
+</table>
+
+<hr>
+
+<!-- LEARNING ENGINE -->
+<h2>05 — The Learning Loop</h2>
+<div class="section-label">How ATLAS gets measurably smarter — not just incrementally better</div>
+
+<div class="engine-box">
+  <div class="engine-title">🔁 The Continuous Learning Cycle — runs every 7 days</div>
+  <div class="engine-steps">
+    <div class="engine-step">
+      <div class="e-num">01</div>
+      <div class="e-text"><strong>Harvest:</strong> ATLAS pulls all episodic memory from the past 7 days — every agent action, every outcome, every override by a human</div>
+    </div>
+    <div class="engine-step">
+      <div class="e-num">02</div>
+      <div class="e-text"><strong>Evaluate:</strong> For each action type, calculates precision and recall — how often was the agent right, how often did it miss something it should have caught</div>
+    </div>
+    <div class="engine-step">
+      <div class="e-num">03</div>
+      <div class="e-text"><strong>Identify drift:</strong> Compares this week's lab patterns to historical baseline — flags any significant changes in workflow, volume, or error rates</div>
+    </div>
+    <div class="engine-step">
+      <div class="e-num">04</div>
+      <div class="e-text"><strong>Update thresholds:</strong> Adjusts confidence floors for each agent based on outcome data — agents that have been reliably right get more autonomy, unreliable ones get more human oversight</div>
+    </div>
+    <div class="engine-step">
+      <div class="e-num">05</div>
+      <div class="e-text"><strong>Update procedural memory:</strong> Writes improved decision strategies back to procedural memory — agents use these on their next event cycle automatically</div>
+    </div>
+    <div class="engine-step">
+      <div class="e-num">06</div>
+      <div class="e-text"><strong>Generate intelligence report:</strong> Produces a plain-language weekly report for the lab director — what changed, what improved, what ATLAS learned, what it recommends next</div>
+    </div>
+  </div>
+</div>
+
+<hr>
+
+<!-- PRIVACY GUARDRAILS ON LEARNING -->
+<h2>06 — Privacy Guardrails on the Learning System</h2>
+<div class="section-label">Learning cannot compromise patient data — these constraints are non-negotiable</div>
+
+<div class="guardrails">
+  <div class="guardrail">
+    <div class="g-icon">🧩</div>
+    <div class="g-title">Anonymization before storage</div>
+    <div class="g-desc">All episodes stored in episodic memory have PHI stripped and replaced with anonymous tokens before storage. ATLAS learns from patterns, not from identities.</div>
+  </div>
+  <div class="guardrail">
+    <div class="g-icon">🔏</div>
+    <div class="g-title">Differential privacy on collective memory</div>
+    <div class="g-desc">Before any learning is shared with the federated network, mathematical noise is added via differential privacy — making it impossible to reverse-engineer any individual lab's data from the shared model.</div>
+  </div>
+  <div class="guardrail">
+    <div class="g-icon">🗑️</div>
+    <div class="g-title">Right to forget</div>
+    <div class="g-desc">A lab can request full memory purge at any time. All episodic, procedural, and working memory is deleted. Semantic memory (SOPs) is returned to the lab. ATLAS resets to Day 1 Observe mode.</div>
+  </div>
+  <div class="guardrail">
+    <div class="g-icon">🔍</div>
+    <div class="g-title">Memory audit on demand</div>
+    <div class="g-desc">The lab director can query ATLAS: "what do you know about this specimen type?" and receive a full transparency report — every data point ATLAS holds, its source, and its age.</div>
+  </div>
+  <div class="guardrail">
+    <div class="g-icon">🚫</div>
+    <div class="g-title">No cross-patient reasoning</div>
+    <div class="g-desc">ATLAS never reasons about Patient A using Patient B's data. All patient-adjacent reasoning is strictly scoped to anonymous specimen-type and workflow patterns only.</div>
+  </div>
+  <div class="guardrail">
+    <div class="g-icon">🔒</div>
+    <div class="g-title">Model weights stay on-premise</div>
+    <div class="g-desc">The lab-specific learned model — what makes this lab's ATLAS unique — never leaves the lab's infrastructure. Only anonymized gradient updates go to the federated network.</div>
+  </div>
+</div>
+
+<hr>
+
+<!-- TECH STACK -->
+<h2>07 — Recommended Technical Stack</h2>
+<div class="section-label">What ATLAS is built on — open, auditable, healthcare-grade</div>
+
+<div class="stack-grid">
+  <div class="stack-card">
+    <div class="stack-layer">Episodic Memory</div>
+    <div class="stack-items">
+      <div class="stack-item"><span class="arrow">→</span> PostgreSQL + pgvector</div>
+      <div class="stack-item"><span class="arrow">→</span> TimescaleDB extension</div>
+      <div class="stack-item"><span class="arrow">→</span> On-premise deployment</div>
+    </div>
+  </div>
+  <div class="stack-card">
+    <div class="stack-layer">Semantic Memory</div>
+    <div class="stack-items">
+      <div class="stack-item"><span class="arrow">→</span> Neo4j knowledge graph</div>
+      <div class="stack-item"><span class="arrow">→</span> Versioned with Git-like diffs</div>
+      <div class="stack-item"><span class="arrow">→</span> Full-text + vector search</div>
+    </div>
+  </div>
+  <div class="stack-card">
+    <div class="stack-layer">Working Memory</div>
+    <div class="stack-items">
+      <div class="stack-item"><span class="arrow">→</span> Redis Streams</div>
+      <div class="stack-item"><span class="arrow">→</span> Real-time event bus</div>
+      <div class="stack-item"><span class="arrow">→</span> Sub-100ms reads</div>
+    </div>
+  </div>
+  <div class="stack-card">
+    <div class="stack-layer">Learning Engine</div>
+    <div class="stack-items">
+      <div class="stack-item"><span class="arrow">→</span> Python / PyTorch</div>
+      <div class="stack-item"><span class="arrow">→</span> Flower (federated learning)</div>
+      <div class="stack-item"><span class="arrow">→</span> Weekly retraining pipeline</div>
+    </div>
+  </div>
+  <div class="stack-card">
+    <div class="stack-layer">Agent Reasoning</div>
+    <div class="stack-items">
+      <div class="stack-item"><span class="arrow">→</span> Claude API (Haiku for speed)</div>
+      <div class="stack-item"><span class="arrow">→</span> LangGraph agent framework</div>
+      <div class="stack-item"><span class="arrow">→</span> Structured tool calls</div>
+    </div>
+  </div>
+  <div class="stack-card">
+    <div class="stack-layer">Privacy Layer</div>
+    <div class="stack-items">
+      <div class="stack-item"><span class="arrow">→</span> Microsoft Presidio (PHI removal)</div>
+      <div class="stack-item"><span class="arrow">→</span> Opacus (differential privacy)</div>
+      <div class="stack-item"><span class="arrow">→</span> Audit via OpenTelemetry</div>
+    </div>
+  </div>
+</div>
+
+<!-- SOUL BOX -->
+<div class="soul">
+  <div class="soul-title">🧬 What makes ATLAS different from any other AI system</div>
+  <div class="soul-desc">
+    Most AI tools deployed in hospitals are <strong>stateless</strong> — they process each event without memory of the last one, without knowledge of this specific lab, without growth. They are the same on Day 300 as they were on Day 1.<br><br>
+    ATLAS is the opposite. It is <strong>born knowing nothing about your lab</strong> — and it learns everything. By Month 6, no competing product that arrives later can replicate what ATLAS knows, because that knowledge was built by living through your lab's actual history. <strong>The data and the learned model belong to you</strong> — not to LabMind, not to any cloud provider.<br><br>
+    This is the moat. Not the technology. The accumulated, irreplaceable, lab-specific intelligence that makes every lab running LabMind a unique, continuously improving system.
+  </div>
+</div>
+
+
+</section>
+<section id="sec-governance" class="doc-section" data-accent="#dc2626">
+
+
+<h1>ATLAS Memory Governance</h1>
+<p class="subtitle">Erasure, privilege architecture, and the immutable audit system</p>
+
+<!-- WARNING -->
+<div class="warning-banner">
+  <div class="warn-icon">⛔</div>
+  <div>
+    <div class="warn-title">Memory Erasure is a Regulated Administrative Act — Not a Feature</div>
+    <div class="warn-body">
+      In a clinical laboratory system, deleting learned intelligence is equivalent to destroying institutional records. It has <strong>patient safety implications</strong>, <strong>regulatory consequences</strong>, and <strong>legal liability</strong>. ATLAS treats erasure with the same gravity as a controlled substance disposal or a calibration record deletion. It is not accessible to regular users. It is not reversible. And it is <strong>never silent</strong> — every erasure event is permanently recorded in an immutable, tamper-proof log that survives the erasure itself.
+    </div>
+  </div>
+</div>
+
+<hr>
+
+<!-- PRIVILEGE TIERS -->
+<h2 class="blue">01 — Privilege Architecture</h2>
+<div class="section-label">Five tiers — only the highest two can touch memory governance</div>
+
+<div class="priv-grid">
+
+  <div class="priv-card tier-viewer">
+    <div class="priv-tier">Tier 1</div>
+    <div class="priv-name">Viewer</div>
+    <div class="priv-desc">Lab technician, junior staff. Can see agent outputs and alerts only.</div>
+    <div class="priv-can">
+      <div class="priv-item"><span class="can">✓</span> View dashboards and reports</div>
+      <div class="priv-item"><span class="can">✓</span> Acknowledge alerts</div>
+      <div class="priv-item"><span class="cannot">✗</span> Cannot override any agent</div>
+      <div class="priv-item"><span class="cannot">✗</span> Cannot access memory</div>
+    </div>
+  </div>
+
+  <div class="priv-card tier-operator">
+    <div class="priv-tier">Tier 2</div>
+    <div class="priv-name">Operator</div>
+    <div class="priv-desc">Senior tech, pathologist. Can interact with agents and provide feedback.</div>
+    <div class="priv-can">
+      <div class="priv-item"><span class="can">✓</span> Accept or dismiss suggestions</div>
+      <div class="priv-item"><span class="can">✓</span> Override agent decisions</div>
+      <div class="priv-item"><span class="can">✓</span> View episodic memory summaries</div>
+      <div class="priv-item"><span class="cannot">✗</span> Cannot modify memory</div>
+      <div class="priv-item"><span class="cannot">✗</span> Cannot access erasure</div>
+    </div>
+  </div>
+
+  <div class="priv-card tier-admin">
+    <div class="priv-tier">Tier 3</div>
+    <div class="priv-name">Administrator</div>
+    <div class="priv-desc">Lab director, IT head. Can configure the system and manage protocols.</div>
+    <div class="priv-can">
+      <div class="priv-item"><span class="can">✓</span> Update semantic memory (SOPs)</div>
+      <div class="priv-item"><span class="can">✓</span> Adjust agent parameters</div>
+      <div class="priv-item"><span class="can">✓</span> View full audit logs</div>
+      <div class="priv-item"><span class="can">✓</span> Initiate erasure REQUEST only</div>
+      <div class="priv-item"><span class="cannot">✗</span> Cannot approve own erasure request</div>
+      <div class="priv-item"><span class="cannot">✗</span> Cannot execute erasure alone</div>
+    </div>
+  </div>
+
+  <div class="priv-card tier-superadmin">
+    <div class="priv-tier">Tier 4 — Restricted</div>
+    <div class="priv-name">Super Administrator</div>
+    <div class="priv-desc">Hospital CIO or designated data governance officer. Dual-person integrity required for erasure.</div>
+    <div class="priv-can">
+      <div class="priv-item"><span class="can">✓</span> Approve erasure requests</div>
+      <div class="priv-item"><span class="can">✓</span> Execute erasure alongside Tier 4 peer</div>
+      <div class="priv-item"><span class="can">✓</span> Access full memory audit trail</div>
+      <div class="priv-item"><span class="can">✓</span> Manage privilege assignments</div>
+      <div class="priv-item"><span class="cannot">✗</span> Cannot act alone on erasure</div>
+      <div class="priv-item"><span class="cannot">✗</span> Cannot touch immutable audit log</div>
+    </div>
+  </div>
+
+  <div class="priv-card tier-locked">
+    <div class="priv-tier">Tier 5 — System Level</div>
+    <div class="priv-name">LabMind Root</div>
+    <div class="priv-desc">LabMind engineering — break-glass access only, requires legal documentation and notarized consent from hospital authority. Used only for catastrophic system recovery.</div>
+    <div class="priv-can">
+      <div class="priv-item"><span class="can">✓</span> Emergency system recovery only</div>
+      <div class="priv-item"><span class="can">✓</span> Requires signed legal instrument</div>
+      <div class="priv-item"><span class="can">✓</span> Every action live-streamed to hospital CIO</div>
+      <div class="priv-item"><span class="cannot">✗</span> Cannot access patient-adjacent data</div>
+      <div class="priv-item"><span class="cannot">✗</span> All actions permanently logged off-site</div>
+    </div>
+  </div>
+
+</div>
+
+<hr>
+
+<!-- DUAL PERSON INTEGRITY -->
+<h2>02 — Dual-Person Integrity for Erasure</h2>
+<div class="section-label">No single human can erase ATLAS memory — ever</div>
+
+<div style="background:#1a0505; border:0.5px solid #dc262644; border-radius:12px; padding:16px; margin-bottom:1.5rem;">
+  <div style="font-size:13px; font-weight:600; color:#f87171; margin-bottom:10px;">The Two-Key Rule</div>
+  <div style="font-size:12px; color:#9f4040; line-height:1.7; margin-bottom:12px;">
+    Borrowed from nuclear launch protocol. No single administrator — regardless of seniority — can initiate and approve a memory erasure. Two separate Tier 4 Super Administrators must independently authenticate, review the erasure scope, and simultaneously authorize the action within a 15-minute window. If either withdraws consent, the procedure aborts and the attempt is logged.
+  </div>
+  <div style="display:flex; flex-wrap:wrap; gap:8px;">
+    <div style="background:#dc262611; border:0.5px solid #dc262633; border-radius:8px; padding:10px 12px; flex:1; min-width:150px;">
+      <div style="font-size:11px; font-weight:600; color:#f87171; margin-bottom:4px;">Person A</div>
+      <div style="font-size:11px; color:#9f4040;">Initiates request, defines scope, provides documented justification, authenticates with hardware token + biometric</div>
+    </div>
+    <div style="font-size:18px; color:#474747; display:flex; align-items:center; padding:0 4px;">+</div>
+    <div style="background:#dc262611; border:0.5px solid #dc262633; border-radius:8px; padding:10px 12px; flex:1; min-width:150px;">
+      <div style="font-size:11px; font-weight:600; color:#f87171; margin-bottom:4px;">Person B</div>
+      <div style="font-size:11px; color:#9f4040;">Independently reviews scope, verifies justification against regulatory framework, authenticates separately, issues cryptographic co-signature</div>
+    </div>
+    <div style="font-size:18px; color:#474747; display:flex; align-items:center; padding:0 4px;">=</div>
+    <div style="background:#14532d22; border:0.5px solid #16a34a33; border-radius:8px; padding:10px 12px; flex:1; min-width:150px;">
+      <div style="font-size:11px; font-weight:600; color:#4ade80; margin-bottom:4px;">Erasure Authorized</div>
+      <div style="font-size:11px; color:#166534;">Only then does ATLAS begin the governed erasure procedure — with 72-hour cool-down period before execution</div>
+    </div>
+  </div>
+</div>
+
+<hr>
+
+<!-- ERASURE PROCEDURE -->
+<h2>03 — The Governed Erasure Procedure</h2>
+<div class="section-label">Nine steps — no shortcuts, no exceptions</div>
+
+<div class="procedure">
+
+  <div class="proc-step step-gate">
+    <div class="proc-left">
+      <div class="proc-circle">1</div>
+      <div class="proc-vline"></div>
+    </div>
+    <div class="proc-body">
+      <div class="proc-title">Erasure Request Filed</div>
+      <div class="proc-detail">Tier 3 Administrator files a formal erasure request specifying: scope (which memory type, what time range), regulatory basis (DPDPA / GDPR / ADHICS article cited), business justification, and requesting authority. Request is timestamped and hash-signed. Cannot be withdrawn silently.</div>
+      <span class="proc-tag">Tier 3 initiates</span>
+    </div>
+  </div>
+
+  <div class="proc-step step-gate">
+    <div class="proc-left">
+      <div class="proc-circle">2</div>
+      <div class="proc-vline"></div>
+    </div>
+    <div class="proc-body">
+      <div class="proc-title">Regulatory Compliance Check — Automated</div>
+      <div class="proc-detail">ATLAS automatically evaluates whether the requested erasure is legally permissible. Checks: Is the data within mandatory retention period? Is it subject to an active investigation, legal hold, or accreditation audit? Does it contain records required by NABH/NABL for a minimum statutory period? If any check fails, erasure is blocked and reason documented.</div>
+      <span class="proc-tag">System automated</span>
+    </div>
+  </div>
+
+  <div class="proc-step step-gate">
+    <div class="proc-left">
+      <div class="proc-circle">3</div>
+      <div class="proc-vline"></div>
+    </div>
+    <div class="proc-body">
+      <div class="proc-title">72-Hour Mandatory Review Window</div>
+      <div class="proc-detail">A minimum 72-hour cooling-off period begins. During this window, all Tier 3+ users of the institution receive a notification that an erasure is pending. Any Tier 3+ user can raise a hold — triggering an escalated review before the procedure can continue. This prevents rushed or coerced erasures.</div>
+      <span class="proc-tag">72h mandatory wait</span>
+    </div>
+  </div>
+
+  <div class="proc-step step-danger">
+    <div class="proc-left">
+      <div class="proc-circle">4</div>
+      <div class="proc-vline"></div>
+    </div>
+    <div class="proc-body">
+      <div class="proc-title">Dual Super-Administrator Authorization</div>
+      <div class="proc-detail">Two independent Tier 4 Super Administrators authenticate simultaneously using hardware security keys + biometric verification. Each independently reviews the erasure scope and provides a cryptographically signed authorization. Both signatures must arrive within a 15-minute window. Any failure aborts the procedure.</div>
+      <span class="proc-tag">Two-key authorization</span>
+    </div>
+  </div>
+
+  <div class="proc-step step-danger">
+    <div class="proc-left">
+      <div class="proc-circle">5</div>
+      <div class="proc-vline"></div>
+    </div>
+    <div class="proc-body">
+      <div class="proc-title">Pre-Erasure Snapshot to Regulatory Vault</div>
+      <div class="proc-detail">Before any data is deleted, ATLAS creates an encrypted, anonymized snapshot of the erasure-scoped memory and transmits it to an immutable regulatory vault — a write-once storage outside the hospital's infrastructure, accessible only via court order or regulatory audit. The data is erased from the live system but its existence is preserved for accountability.</div>
+      <span class="proc-tag">Immutable vault write</span>
+    </div>
+  </div>
+
+  <div class="proc-step step-crypto">
+    <div class="proc-left">
+      <div class="proc-circle">6</div>
+      <div class="proc-vline"></div>
+    </div>
+    <div class="proc-body">
+      <div class="proc-title">Cryptographic Erasure — Not Just Deletion</div>
+      <div class="proc-detail">ATLAS does not simply delete records. It performs cryptographic erasure — the encryption keys for the scoped memory are destroyed first, rendering the data permanently unreadable, then the data itself is overwritten using DoD 5220.22-M standard (7-pass overwrite). This satisfies GDPR Article 17, DPDPA erasure standards, and ADHICS data destruction requirements.</div>
+      <span class="proc-tag">DoD 5220.22-M standard</span>
+    </div>
+  </div>
+
+  <div class="proc-step step-crypto">
+    <div class="proc-left">
+      <div class="proc-circle">7</div>
+      <div class="proc-vline"></div>
+    </div>
+    <div class="proc-body">
+      <div class="proc-title">Federated Memory Recall</div>
+      <div class="proc-detail">If the erased memory contributed to the federated collective learning model, ATLAS initiates a federated unlearning procedure — notifying the network to exclude this lab's contribution from the shared model weights. This is mathematically complex but mandatory — no ghost data persists in the network.</div>
+      <span class="proc-tag">Federated unlearning</span>
+    </div>
+  </div>
+
+  <div class="proc-step step-final">
+    <div class="proc-left">
+      <div class="proc-circle">8</div>
+      <div class="proc-vline"></div>
+    </div>
+    <div class="proc-body">
+      <div class="proc-title">Verification & Integrity Check</div>
+      <div class="proc-detail">ATLAS runs an automated integrity scan confirming that: all targeted memory is cryptographically unreachable, no residual data exists in backups within scope, federated unlearning has been confirmed by the network, and ATLAS operational capability is intact. Generates a signed verification certificate.</div>
+      <span class="proc-tag">Automated verification</span>
+    </div>
+  </div>
+
+  <div class="proc-step step-final">
+    <div class="proc-left">
+      <div class="proc-circle">9</div>
+      <div class="proc-vline"></div>
+    </div>
+    <div class="proc-body">
+      <div class="proc-title">Permanent Immutable Audit Record Created</div>
+      <div class="proc-detail">The complete erasure event — who requested, who authorized, what was erased, when, why, the regulatory basis, the verification result — is written to the immutable audit log. This record cannot be erased. It persists for the statutory minimum period (10 years under most healthcare regulations) and is replicated off-site. The erasure is recorded even when the data is gone.</div>
+      <span class="proc-tag">Permanent record — survives erasure</span>
+    </div>
+  </div>
+
+</div>
+
+<hr>
+
+<!-- THE JAIL — WHAT IS JAILED -->
+<h2>04 — The Jail — Memory Under Administrative Lock</h2>
+<div class="section-label">Some memory cannot be erased even by the highest privilege — it is jailed</div>
+
+<div class="jail-grid">
+
+  <div class="jail-card">
+    <div class="jail-icon">🔒</div>
+    <div class="jail-title">Critical Value Routing Records</div>
+    <div class="jail-desc">Every critical value alert — who was notified, when, whether it was acknowledged — is permanently jailed. Patient safety events cannot be erased under any circumstance. Statutory retention: minimum 10 years.</div>
+  </div>
+
+  <div class="jail-card">
+    <div class="jail-icon">🔒</div>
+    <div class="jail-title">Audit Log of All Erasures</div>
+    <div class="jail-desc">The record of every erasure event is itself unjailable. You cannot erase the record of an erasure. This is the bedrock of accountability — the audit survives everything.</div>
+  </div>
+
+  <div class="jail-card">
+    <div class="jail-icon">🔒</div>
+    <div class="jail-title">Legal Hold Records</div>
+    <div class="jail-desc">Any memory flagged under an active legal hold, litigation, or regulatory investigation is automatically jailed and cannot be touched by any internal privilege level. Requires court order to modify.</div>
+  </div>
+
+  <div class="jail-card">
+    <div class="jail-icon">🔒</div>
+    <div class="jail-title">Accreditation Audit Evidence</div>
+    <div class="jail-desc">Memory that has been cited in or is within scope of a NABH, NABL, or ADHICS audit cycle is automatically jailed for the duration of that cycle plus 2 years. Cannot be waived by any internal authority.</div>
+  </div>
+
+  <div class="jail-card">
+    <div class="jail-icon">🔒</div>
+    <div class="jail-title">Privilege Assignment History</div>
+    <div class="jail-desc">The complete history of who had what access level, when it was granted, and when it was revoked. Cannot be altered retroactively. Prevents privilege escalation from being hidden.</div>
+  </div>
+
+  <div class="jail-card">
+    <div class="jail-icon">🔒</div>
+    <div class="jail-title">System Integrity Checksums</div>
+    <div class="jail-desc">Cryptographic hashes of all jailed memory blocks, stored off-site. Used to prove tampering has not occurred. If any hash mismatches, an automatic integrity alert fires to LabMind and the hospital regulator simultaneously.</div>
+  </div>
+
+</div>
+
+<hr>
+
+<!-- WHAT AN AUDIT LOG LOOKS LIKE -->
+<h2 class="blue">05 — What an Erasure Audit Record Looks Like</h2>
+<div class="section-label">Immutable — written once, never modified, never deleted</div>
+
+<div class="audit-box">
+  <div class="audit-header">🔒 ATLAS ERASURE EVENT LOG — ERZ-2026-0041 — IMMUTABLE</div>
+  <div class="audit-body">
+    <div class="audit-field"><span class="audit-key">event_id</span><span class="audit-val purple">ERZ-2026-0041-SHA256:a3f9c2...</span></div>
+    <div class="audit-field"><span class="audit-key">timestamp_utc</span><span class="audit-val">2026-06-13T09:14:22Z</span></div>
+    <div class="audit-field"><span class="audit-key">requested_by</span><span class="audit-val amber">ADMIN-T3-0047 [Lab Director, anonymized]</span></div>
+    <div class="audit-field"><span class="audit-key">authorized_by_A</span><span class="audit-val amber">SADMIN-T4-0003 [CIO, token:HW-7821]</span></div>
+    <div class="audit-field"><span class="audit-key">authorized_by_B</span><span class="audit-val amber">SADMIN-T4-0009 [Data Gov Officer, token:HW-6634]</span></div>
+    <div class="audit-field"><span class="audit-key">regulatory_basis</span><span class="audit-val">DPDPA 2023 Section 12(a) — data principal request</span></div>
+    <div class="audit-field"><span class="audit-key">compliance_check</span><span class="audit-val green">PASSED — no active holds, outside retention minimum</span></div>
+    <div class="audit-field"><span class="audit-key">cooling_off_period</span><span class="audit-val green">72h elapsed — no holds raised</span></div>
+    <div class="audit-field"><span class="audit-key">memory_scope_erased</span><span class="audit-val red">EPISODIC_MEMORY — 2026-01-01 to 2026-03-31</span></div>
+    <div class="audit-field"><span class="audit-key">method</span><span class="audit-val">Cryptographic key destruction + DoD 5220.22-M overwrite</span></div>
+    <div class="audit-field"><span class="audit-key">vault_snapshot_written</span><span class="audit-val green">CONFIRMED — VAULT-REF-2026-ERZ-0041</span></div>
+    <div class="audit-field"><span class="audit-key">federated_unlearning</span><span class="audit-val green">CONFIRMED — network acknowledged within 4h</span></div>
+    <div class="audit-field"><span class="audit-key">integrity_verification</span><span class="audit-val green">PASSED — signed cert: CERT-ERZ-2026-0041</span></div>
+    <div class="audit-field"><span class="audit-key">this_record_erasable</span><span class="audit-val red">NO — JAILED — statutory retention 10 years</span></div>
+    <div class="audit-field"><span class="audit-key">record_hash</span><span class="audit-val purple">SHA-256: 7d3f8a1c9b... [tamper-evident]</span></div>
+  </div>
+</div>
+
+<hr>
+
+<!-- WHAT NEVER ERASABLE TABLE -->
+<h2>06 — Statutory Retention — What Cannot Be Deleted and for How Long</h2>
+<div class="section-label">Regardless of any privilege level or request</div>
+
+<div style="background:#0a0f1e; border:0.5px solid #1e293b; border-radius:10px; overflow:hidden;">
+  <table class="never-table" style="width:100%;">
+    <tr>
+      <th>Memory Type</th>
+      <th>Minimum Retention</th>
+      <th>Why It Cannot Be Erased</th>
+    </tr>
+    <tr>
+      <td>Critical value routing logs</td>
+      <td>10 years</td>
+      <td><span class="never-reason">Patient safety — medical-legal liability standard</span></td>
+    </tr>
+    <tr>
+      <td>All erasure event records</td>
+      <td>10 years</td>
+      <td><span class="never-reason">Accountability — the record of destruction must outlast the destruction</span></td>
+    </tr>
+    <tr>
+      <td>NABH/NABL audit evidence</td>
+      <td>Audit cycle + 2 years</td>
+      <td><span class="never-reason">Regulatory — accreditation body requirement</span></td>
+    </tr>
+    <tr>
+      <td>Agent authorization logs</td>
+      <td>7 years</td>
+      <td><span class="never-reason">Legal — demonstrates human oversight of AI decisions</span></td>
+    </tr>
+    <tr>
+      <td>Privilege assignment history</td>
+      <td>7 years</td>
+      <td><span class="never-reason">Security — prevents retroactive privilege manipulation</span></td>
+    </tr>
+    <tr>
+      <td>Legal hold records</td>
+      <td>Until released by court</td>
+      <td><span class="never-reason">Legal — destruction during hold is contempt of court</span></td>
+    </tr>
+  </table>
+</div>
+
+<hr>
+
+<!-- OLD VS NEW -->
+<h2 class="green">07 — Why This Matters for the Pitch</h2>
+<div class="section-label">The difference between a startup that fails procurement and one that wins it</div>
+
+<div class="compare-grid">
+  <div class="compare-bad">
+    <div class="compare-label">❌ What most AI startups do</div>
+    <div class="compare-items">
+      <div class="compare-item" style="color:#9f4040;">→ "Delete" button in settings for any admin</div>
+      <div class="compare-item" style="color:#9f4040;">→ No audit trail of what was deleted</div>
+      <div class="compare-item" style="color:#9f4040;">→ No regulatory compliance check</div>
+      <div class="compare-item" style="color:#9f4040;">→ No mandatory retention periods enforced</div>
+      <div class="compare-item" style="color:#9f4040;">→ Hospital IT head says no at procurement</div>
+      <div class="compare-item" style="color:#9f4040;">→ Fails ADHICS and NABH audit immediately</div>
+    </div>
+  </div>
+  <div class="compare-good">
+    <div class="compare-label">✓ What ATLAS does</div>
+    <div class="compare-items">
+      <div class="compare-item" style="color:#166534;">→ Erasure is a 9-step regulated procedure</div>
+      <div class="compare-item" style="color:#166534;">→ Immutable audit record survives all erasures</div>
+      <div class="compare-item" style="color:#166534;">→ Automated regulatory compliance check</div>
+      <div class="compare-item" style="color:#166534;">→ Statutory retention enforced automatically</div>
+      <div class="compare-item" style="color:#166534;">→ Hospital legal team says yes at procurement</div>
+      <div class="compare-item" style="color:#166534;">→ ADHICS and NABH audit-ready out of the box</div>
+    </div>
+  </div>
+</div>
+
+
+</section>
+
+<!-- FOOTER -->
+<div class="masterfoot">
+  LabMind · Master System Document · Compiled for Hub71+ AI application<br>
+  Five integrated specifications — Architecture · Hierarchy · Security · ATLAS · Governance
+</div>
+
+<a href="#" class="totop" id="totop">↑</a>
+
+<script>
+  const links = Array.from(document.querySelectorAll('.navlink'));
+  const sections = links.map(l => document.getElementById(l.dataset.target));
+  const progress = document.getElementById('progress');
+  const totop = document.getElementById('totop');
+
+  function onScroll() {
+    const st = window.scrollY;
+    const h = document.documentElement.scrollHeight - window.innerHeight;
+    progress.style.width = (h>0 ? (st/h)*100 : 0) + '%';
+    totop.classList.toggle('show', st > 600);
+
+    let current = sections[0];
+    for (const s of sections) {
+      if (s && s.getBoundingClientRect().top <= 80) current = s;
+    }
+    links.forEach(l => l.classList.toggle('active', l.dataset.target === current.id));
+  }
+  document.addEventListener('scroll', onScroll, {passive:true});
+  onScroll();
+</script>
+
+</body>
+</html>

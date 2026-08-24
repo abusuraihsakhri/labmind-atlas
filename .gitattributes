@@ -1,0 +1,20 @@
+# GitHub Linguist language detection overrides
+# Hide documentation, schema scripts, and styling from language statistics bar
+
+*.html linguist-documentation=true
+*.md linguist-documentation=true
+*.sql linguist-documentation=true
+*.css linguist-documentation=true
+*.mjs linguist-documentation=true
+*.json linguist-documentation=true
+*.ini linguist-documentation=true
+*.mako linguist-documentation=true
+*.svg linguist-documentation=true
+Dockerfile* linguist-documentation=true
+.github/** linguist-documentation=true
+infra/init-db/** linguist-documentation=true
+
+# Explicitly declare primary codebase languages
+*.py linguist-detectable=true
+*.ts linguist-detectable=true
+*.tsx linguist-detectable=true

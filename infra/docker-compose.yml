@@ -1,0 +1,127 @@
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: labmind-db
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-labmind}
+      POSTGRES_USER: ${POSTGRES_USER:-labmind_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./init-db:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-labmind_admin} -d ${POSTGRES_DB:-labmind}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - labmind-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: labmind-redis
+    command: redis-server --requirepass ${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env}
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - labmind-network
+
+  gateway:
+    build:
+      context: ../gateway
+      dockerfile: Dockerfile
+    container_name: labmind-gateway
+    ports:
+      - "8000:8000"
+    env_file:
+      - ../.env
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-labmind_admin}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-labmind}
+      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - labmind-network
+
+  agents:
+    build:
+      context: ../agents
+      dockerfile: Dockerfile
+    container_name: labmind-agents
+    ports:
+      - "8001:8001"
+    env_file:
+      - ../.env
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-labmind_admin}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-labmind}
+      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - labmind-network
+
+  simulator:
+    build:
+      context: ../simulator
+      dockerfile: Dockerfile
+    container_name: labmind-simulator
+    env_file:
+      - ../.env
+    depends_on:
+      gateway:
+        condition: service_started
+    networks:
+      - labmind-network
+
+  web:
+    build:
+      context: ../web
+      dockerfile: Dockerfile
+    container_name: labmind-web
+    ports:
+      - "3000:3000"
+    environment:
+      - AGENT_API_URL=http://agents:8001
+      - TIER2_AUTH_SECRET=${TIER2_AUTH_SECRET}
+      - TIER3_AUTH_SECRET=${TIER3_AUTH_SECRET}
+      - NEXT_PUBLIC_AGENT_API=http://localhost:3000
+    depends_on:
+      agents:
+        condition: service_started
+    networks:
+      - labmind-network
+
+volumes:
+  pgdata:
+  redisdata:
+
+networks:
+  labmind-network:
+    driver: bridge
