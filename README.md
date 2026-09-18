@@ -135,7 +135,7 @@ Sitting seamlessly alongside a hospital's existing **Laboratory Information Syst
 | Specification | Minimum (Cloud / API Mode) | Recommended (Local Ollama AI Mode) |
 |---|---|---|
 | **CPU** | 2 Cores (x86_64 / ARM64) | 4+ Cores (Apple Silicon or modern Intel/AMD) |
-| **RAM** | 4 GB | 8 GB – 16 GB (for local 3B–8B parameter models) |
+| **RAM** | 4 GB | 8 GB – 16 GB or more (for local models) |
 | **Disk** | 10 GB SSD space | 25 GB SSD space (includes local LLM weights) |
 | **GPU** | Not required | Optional (Apple Metal / NVIDIA CUDA speeds inference) |
 | **Network** | Outbound HTTPS (if using Cloud LLMs) | **100% Offline / Air-Gapped Supported** |
