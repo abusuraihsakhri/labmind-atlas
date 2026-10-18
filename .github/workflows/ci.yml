@@ -70,3 +70,23 @@ jobs:
       - uses: actions/checkout@v4
       - name: Build agents Docker image
         run: docker build -t labmind-agents ./agents
+
+  test-pages-demo:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Verify deterministic sandbox
+        run: node --test docs/tests/engine.test.mjs
+
+  check-python-syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile Python code
+        run: python -m compileall -q gateway agents simulator
