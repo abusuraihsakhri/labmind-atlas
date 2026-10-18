@@ -68,7 +68,8 @@ async def lifespan(app: FastAPI):
     yield
 
 app = FastAPI(title="LabMind Cloud Agents Service", lifespan=lifespan)
-app.state.limiter = Limiter(key_func=get_remote_address)
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
 
 from agents.metrics import router as metrics_router
 app.include_router(metrics_router)
