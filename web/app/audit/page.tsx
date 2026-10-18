@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
 
 const PROXY_API = "";
 
@@ -35,7 +36,14 @@ export default function AuditPage() {
   const [endDate, setEndDate] = useState("");
 
   useEffect(() => {
-    fetchAuditTrail();
+    const roleParam = encodeURIComponent(userRole);
+    fetch(`\${PROXY_API}/api/proxy?path=/audit&role=\${roleParam}`)
+      .then(response => response.ok ? response.json() : Promise.reject(new Error("Audit access unavailable")))
+      .then(data => {
+        setEvents(data.events);
+        setVerifiedChain(data.verified_chain);
+      })
+      .catch(() => setEvents([]));
   }, [userRole]);
 
   const fetchAuditTrail = async () => {
@@ -93,7 +101,7 @@ export default function AuditPage() {
           {!verifiedChain && <span style={{ fontSize: "0.8rem", color: "hsl(var(--color-danger))", fontWeight: "600" }}>[CHAIN BROKEN]</span>}
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: "24px" }}>
-          <a href="/" style={{
+          <Link href="/" style={{
               background: "rgba(255,255,255,0.05)", 
               border: "1px solid var(--border-color)", 
               color: "var(--text-secondary)", 
@@ -105,7 +113,7 @@ export default function AuditPage() {
               textDecoration: "none"
           }}>
             ← Back to Dashboard
-          </a>
+          </Link>
           <button type="button" onClick={async () => {
             await fetch("/api/session", {method:"DELETE"});
             window.location.href = "/login";
