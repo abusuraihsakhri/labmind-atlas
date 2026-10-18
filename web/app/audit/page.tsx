@@ -37,7 +37,7 @@ export default function AuditPage() {
 
   useEffect(() => {
     const roleParam = encodeURIComponent(userRole);
-    fetch(`\${PROXY_API}/api/proxy?path=/audit&role=\${roleParam}`)
+    fetch(`${PROXY_API}/api/proxy?path=/audit&role=${roleParam}`)
       .then(response => response.ok ? response.json() : Promise.reject(new Error("Audit access unavailable")))
       .then(data => {
         setEvents(data.events);
