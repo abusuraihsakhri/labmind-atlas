@@ -11,7 +11,7 @@ interface AuditEvent {
   actor: string;
   actor_tier: string;
   event_type: string;
-  detail: any;
+  detail: unknown;
   created_at: string;
   is_valid: boolean;
 }
