@@ -29,15 +29,15 @@ class EpisodicMemory(Base):
     id = Column(UUID(as_uuid=True), primary_key=True)
     specimen_token = Column(String(255), nullable=False, index=True)
     summary_text = Column(Text, nullable=False)
-    # We will use text or simple arrays if pgvector is not natively loaded as Type, 
+    # We will use text or simple arrays if pgvector is not natively loaded as Type,
     # but pgvector can be mapped via custom vector type or raw SQL. Let's use custom pgvector column representation.
-    # In SQLAlchemy we can represent it with a raw type or string. Since SQLAlchemy doesn't have vector by default 
+    # In SQLAlchemy we can represent it with a raw type or string. Since SQLAlchemy doesn't have vector by default
     # unless pgvector library is imported, let's declare custom column type for vector.
     from sqlalchemy.types import UserDefinedType
     class VectorType(UserDefinedType):
         def get_col_spec(self, **kw):
             return "vector(384)"
-    
+
     embedding = Column(VectorType, nullable=False)
     outcome = Column(String(255), nullable=False)
     occurred_at = Column(DateTime(timezone=True), nullable=False)
