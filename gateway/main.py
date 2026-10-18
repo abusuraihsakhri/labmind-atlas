@@ -78,7 +78,7 @@ analyzer = AnalyzerEngine(nlp_engine=nlp_engine_instance, supported_languages=["
 anonymizer = AnonymizerEngine()
 
 # Setup Local SQLite for Encrypted Token Mapping
-DB_PATH = "re_identification_map.db"
+DB_PATH = os.getenv("GATEWAY_DB_PATH", "re_identification_map.db")
 
 def get_db_connection():
     conn = sqlite3.connect(DB_PATH, timeout=20.0)
