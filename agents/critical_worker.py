@@ -105,16 +105,16 @@ Task:
             # Extract summary
             summary = "Critical laboratory value detected"
             if "potassium" in text.lower():
-                summary = "Critical Potassium level (Panic high: 6.8 mmol/L)"
+                summary = "Potentially critical potassium result flagged for review (value not verified)"
             elif "platelet" in text.lower():
-                summary = "Critical Platelet count (15,000 /uL)"
+                summary = "Potentially critical platelet count flagged for review (value not verified)"
             elif "malignant" in text.lower():
-                summary = "Malignant neoplasm detected on frozen section"
+                summary = "Potential malignancy-related comment flagged for review (not a diagnosis)"
 
             return {
                 "is_critical": True,
                 "value_summary": summary,
-                "confidence": 0.99,
+                "confidence": 0.50,
                 "reasoning": f"Regex matched critical term: '{match.group(0)}'."
             }
 
