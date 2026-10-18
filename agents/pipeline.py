@@ -2,6 +2,7 @@ import os
 import json
 import time
 import signal
+import threading
 import logging
 import redis
 from datetime import datetime, timezone, timedelta
@@ -102,8 +103,11 @@ def process_stream_event(event_data: dict, db: Session):
 def start_pipeline_listener():
     global _shutdown_requested
 
-    signal.signal(signal.SIGINT, _handle_shutdown)
-    signal.signal(signal.SIGTERM, _handle_shutdown)
+    # signal.signal may only be called from the main Python thread.
+    # FastAPI starts this listener in a daemon background thread.
+    if threading.current_thread() is threading.main_thread():
+        signal.signal(signal.SIGINT, _handle_shutdown)
+        signal.signal(signal.SIGTERM, _handle_shutdown)
 
     r = redis.Redis.from_url(REDIS_URL)
     stream_name = "specimen_events_stream"
