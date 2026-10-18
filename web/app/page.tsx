@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
 
 const PROXY_API = "";
 
@@ -190,7 +191,7 @@ export default function DashboardPage() {
           >
             Toggle Stage: {trustStage}
           </button>
-          <a href="/audit" style={{
+          <Link href="/audit" style={{
               background: "rgba(255,255,255,0.05)", 
               border: "1px solid var(--border-color)", 
               color: "hsl(var(--color-primary))", 
@@ -202,7 +203,7 @@ export default function DashboardPage() {
               textDecoration: "none"
           }}>
             Governance & Audit
-          </a>
+          </Link>
           <button type="button" onClick={async () => {
             await fetch("/api/session", {method:"DELETE"});
             window.location.href = "/login";
