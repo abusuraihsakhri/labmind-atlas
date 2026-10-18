@@ -12,9 +12,9 @@ import redis
 from cryptography.fernet import Fernet
 from presidio_analyzer import AnalyzerEngine
 from presidio_anonymizer import AnonymizerEngine
-from presidio_anonymizer.entities import OperatorConfig
 from slowapi import Limiter
 from slowapi.util import get_remote_address
+from presidio_analyzer.nlp_engine import NlpEngineProvider
 
 logger = logging.getLogger("labmind.gateway")
 logging.basicConfig(
@@ -68,7 +68,6 @@ if not TOKEN_SALT:
 # Initialize cryptography
 fernet = Fernet(RE_ID_MAP_KEY.encode() if isinstance(RE_ID_MAP_KEY, str) else RE_ID_MAP_KEY)
 
-from presidio_analyzer.nlp_engine import NlpEngineProvider
 nlp_configuration = {
     "nlp_engine_name": "spacy",
     "models": [{"lang_code": "en", "model_name": "en_core_web_sm"}]
@@ -139,7 +138,7 @@ def decrypt_value(token_or_encrypted: str) -> str:
 def generate_token(value: str, prefix: str) -> str:
     hash_obj = hmac.new(TOKEN_SALT.encode(), value.encode(), hashlib.sha256)
     token = f"{prefix}_{hash_obj.hexdigest()[:16]}"
-    
+
     # Store real identifier mapping securely
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -154,7 +153,7 @@ def generate_token(value: str, prefix: str) -> str:
         logger.error("Error storing token mapping: %s", type(e).__name__)
     finally:
         conn.close()
-        
+
     return token
 
 def de_identify_text(text: str) -> str:
@@ -162,7 +161,7 @@ def de_identify_text(text: str) -> str:
         return ""
     # Analyze text with Presidio
     results = analyzer.analyze(text=text, language="en")
-    
+
     # We want to replace standard identifiers like PERSON, PHONE_NUMBER, EMAIL_ADDRESS, DATE_TIME, etc.
     # We will replace them with standard placeholders
     anonymized_result = anonymizer.anonymize(
@@ -179,21 +178,21 @@ def ingest_event(request: Request, payload: IngestEventPayload, background_tasks
         raise HTTPException(status_code=401, detail="Unauthorized ingestion request.")
     try:
         raw = payload.raw_payload
-        
+
         # 1. 🔒 De-identification boundary
         # Extract sensitive fields, tokenize them, and ensure they DO NOT cross the boundary
         raw_patient_name = raw.get("patient_name", "Unknown")
         raw_mrn = raw.get("mrn", "Unknown")
         raw_clinician = raw.get("clinician_name", "Unknown")
-        
+
         specimen_token = generate_token(raw.get("specimen_id", "Unknown"), "SPECIMEN")
         patient_token = generate_token(raw_patient_name, "PATIENT")
         mrn_token = generate_token(raw_mrn, "MRN")
         clinician_token = generate_token(raw_clinician, "CLINICIAN")
-        
+
         # De-identify comments using Presidio
         de_identified_comments = de_identify_text(raw.get("comments", ""))
-        
+
         # 2. Build the final de-identified payload
         de_identified_payload = {
             "event_id": payload.event_id,
@@ -209,20 +208,20 @@ def ingest_event(request: Request, payload: IngestEventPayload, background_tasks
             "status": raw.get("status", ""),
             "de_identified_comments": de_identified_comments
         }
-        
+
         # 3. Publish to Redis Stream
         # Send event to "specimen_events_stream"
         redis_client.xadd(
             "specimen_events_stream",
             {"event": json.dumps(de_identified_payload)}
         )
-        
+
         return {
             "status": "success",
             "message": "Event processed and de-identified successfully",
             "specimen_token": specimen_token
         }
-        
+
     except Exception as e:
         logger.error("Ingestion error: %s", e, exc_info=True)
         raise HTTPException(status_code=500, detail="Internal ingestion error")
@@ -241,5 +240,5 @@ def resolve_token(request: Request, token: str, x_auth_token: str = Header(..., 
     try:
         resolved = decrypt_value(token)
         return {"token": token, "resolved": resolved}
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=404, detail="Token not found")
