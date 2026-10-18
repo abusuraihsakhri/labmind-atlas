@@ -79,7 +79,7 @@ def notify_critical_value(
         <p><strong>Time:</strong> {routed_at}</p>
         <hr>
         <p style="color: #6b7280; font-size: 12px;">
-            This is an automated alert from LabMind ATLAS. 
+            This is an automated alert from LabMind ATLAS.
             Please acknowledge this alert in the dashboard.
         </p>
     </body>
