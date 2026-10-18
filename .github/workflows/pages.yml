@@ -1,0 +1,73 @@
+name: LabMind Pages Demo
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "docs/**"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: labmind-pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Verify demo logic
+        run: node --test docs/tests/engine.test.mjs
+      - name: Validate public asset paths
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          root = Path("docs")
+          html = (root / "index.html").read_text()
+          for file in ("styles.css", "app.js", "engine.mjs"):
+              assert (root / file).is_file(), f"Missing {file}"
+          assert './styles.css' in html and './app.js' in html
+          assert './engine.mjs' in (root / 'app.js').read_text()
+          print("Relative-path assets verified")
+          PY
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+      - name: Upload demonstration
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+      - name: Deploy GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      - name: Smoke-test public HTML and assets
+        env:
+          PUBLIC_URL: ${{ steps.deployment.outputs.page_url }}
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 12); do
+            if curl --fail --silent --show-error --location "$PUBLIC_URL" --output /tmp/labmind-index.html && grep -q 'Laboratory intelligence' /tmp/labmind-index.html; then
+              curl --fail --silent --show-error --location "${PUBLIC_URL%/}/app.js" --output /dev/null
+              curl --fail --silent --show-error --location "${PUBLIC_URL%/}/engine.mjs" --output /dev/null
+              curl --fail --silent --show-error --location "${PUBLIC_URL%/}/styles.css" --output /dev/null
+              echo "Pages index and assets confirmed reachable."
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "Published Pages site was not reachable." >&2
+          exit 1

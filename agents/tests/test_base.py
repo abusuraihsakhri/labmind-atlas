@@ -11,7 +11,7 @@ os.environ["SERVICE_AUTH_SECRET"] = "test-service-secret"
 os.environ["DATABASE_URL"] = "sqlite:///:memory:"
 os.environ["REDIS_URL"] = "redis://localhost:6379/0"
 
-from agents.base import assert_no_phi, SecurityException, ActionProposed, ActionExecutor
+from agents.base import assert_no_phi, SecurityException, ActionProposed
 
 
 class TestPHIGuard:

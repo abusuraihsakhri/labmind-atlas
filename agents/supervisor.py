@@ -1,15 +1,11 @@
-import os
 import json
+import re
 import logging
 from agents.llm_factory import get_llm
 from sqlalchemy.orm import Session
 from agents.models import SpecimenState, Action
-from agents.base import assert_no_phi
 
 logger = logging.getLogger("labmind.supervisor")
-
-import re
-import html
 
 class SupervisorAgent:
     def __init__(self):
@@ -85,12 +81,12 @@ CRITICAL SECURITY & OPERATIONAL INSTRUCTIONS:
             breaching = [s for s in specimens if s["tat_risk_level"] in ["yellow", "red"]]
             if not breaching:
                 return "All active specimens are currently processing within nominal Turnaround Time limits."
-            
+
             res = f"There are {len(breaching)} specimens currently at risk of Turnaround Time breaches:\n"
             for b in breaching:
                 res += f"- Specimen `{b['specimen_token'][:12]}...` is status '{b['status']}' with risk level **{b['tat_risk_level'].upper()}** (Expected signout: {b['expected_signout']}).\n"
             return res
-            
+
         if "alert" in q or "action" in q or "pending" in q:
             if not actions:
                 return "No pending workflow alerts or actions require approval right now."
@@ -98,7 +94,7 @@ CRITICAL SECURITY & OPERATIONAL INSTRUCTIONS:
             for a in actions:
                 res += f"- **[{a['agent']}]** {a['action_type']} for specimen `{a['specimen_token'][:12]}...`: *{a['reasoning']}*\n"
             return res
-            
+
         return (
             "I am currently running in local offline mode. I can answer queries about "
             "'specimens at risk' or 'pending alerts/actions'. Please refine your question."

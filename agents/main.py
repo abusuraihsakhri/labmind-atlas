@@ -11,6 +11,7 @@ from pydantic import BaseModel
 from datetime import datetime, timezone, timedelta
 from typing import Optional
 import hmac
+import hashlib
 import os
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from slowapi import Limiter
@@ -21,6 +22,7 @@ import io
 import asyncio
 import logging
 from fastapi.responses import StreamingResponse
+from agents.metrics import router as metrics_router
 
 logger = logging.getLogger("labmind.agents")
 
@@ -68,9 +70,9 @@ async def lifespan(app: FastAPI):
     yield
 
 app = FastAPI(title="LabMind Cloud Agents Service", lifespan=lifespan)
-app.state.limiter = Limiter(key_func=get_remote_address)
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
 
-from agents.metrics import router as metrics_router
 app.include_router(metrics_router)
 
 # Allow CORS for Next.js web app
@@ -108,7 +110,7 @@ async def stream_specimens(user: dict = Depends(require_tier(["Tier 2", "Tier 3"
                     yield f"data: {json.dumps({'type': 'specimens', 'data': data})}\n\n"
                     last_count = current_count
                 else:
-                    yield f": keepalive\n\n"
+                    yield ": keepalive\n\n"
             except Exception as e:
                 logger.error("SSE error: %s", e)
             finally:
@@ -160,7 +162,9 @@ def approve_action(request: Request, action_id: str, db: Session = Depends(get_d
     action = db.query(Action).filter(Action.id == action_id).first()
     if not action:
         raise HTTPException(status_code=404, detail="Action not found")
-    
+
+    if action.status != "proposed":
+        raise HTTPException(status_code=409, detail="Only pending actions may be approved")
     action.status = "approved"
     action.resolved_at = datetime.now(timezone.utc)
     action.resolved_by = f"{user['user']} ({user['tier']})"
@@ -186,7 +190,9 @@ def dismiss_action(request: Request, action_id: str, db: Session = Depends(get_d
     action = db.query(Action).filter(Action.id == action_id).first()
     if not action:
         raise HTTPException(status_code=404, detail="Action not found")
-    
+
+    if action.status != "proposed":
+        raise HTTPException(status_code=409, detail="Only pending actions may be dismissed")
     action.status = "dismissed"
     action.resolved_at = datetime.now(timezone.utc)
     action.resolved_by = f"{user['user']} ({user['tier']})"
@@ -214,11 +220,11 @@ def get_trust_stage(user: dict = Depends(require_tier(["Tier 2", "Tier 3"]))):
 def update_trust_stage(payload: StageUpdateRequest, db: Session = Depends(get_db), user: dict = Depends(require_tier(["Tier 3"]))):
     if payload.stage not in ["OBSERVE", "SUGGEST"]:
         raise HTTPException(status_code=400, detail="Invalid trust stage. Must be OBSERVE or SUGGEST.")
-    
+
     with _config_lock:
         old_stage = GLOBAL_CONFIG["trust_stage"]
         GLOBAL_CONFIG["trust_stage"] = payload.stage
-    
+
     # Log in audit trail
     ActionExecutor.log_audit_event(
         db=db,
@@ -238,11 +244,11 @@ def acknowledge_critical_alert(alert_id: str, db: Session = Depends(get_db), use
     critical_event = db.query(CriticalValueEvent).filter(CriticalValueEvent.id == alert_id).first()
     if not critical_event:
         raise HTTPException(status_code=404, detail="Critical value alert not found")
-        
+
     critical_event.acknowledged_at = datetime.now(timezone.utc)
     critical_event.acknowledged_by = f"{user['user']} ({user['tier']})"
     db.commit()
-    
+
     # Log in audit trail
     ActionExecutor.log_audit_event(
         db=db,
@@ -272,17 +278,28 @@ def supervisor_chat(request: Request, payload: ChatRequest, db: Session = Depend
 @app.get("/audit")
 def get_audit_trail(db: Session = Depends(get_db), user: dict = Depends(require_tier(["Tier 3"]))):
     events = db.query(AuditEvent).order_by(AuditEvent.id.asc()).all()
-    
+
     verified_chain = True
     prev_hash_tracker = "0" * 64
     serialized_events = []
-    
+
     for e in events:
         # Verify prev_hash matches tracker
-        is_valid = (e.prev_hash == prev_hash_tracker)
+        # Verify each row's HMAC, not only the predecessor pointer.
+        signature_data = (
+            f"{e.prev_hash}|{e.actor}|{e.actor_tier}|{e.event_type}|"
+            f"{json.dumps(e.detail_jsonb, sort_keys=True)}|{e.created_at.isoformat()}"
+        ).encode("utf-8")
+        expected_hash = hmac.new(
+            os.environ["AUDIT_SECRET_KEY"].encode(), signature_data, hashlib.sha256
+        ).hexdigest()
+        is_valid = (
+            e.prev_hash == prev_hash_tracker
+            and hmac.compare_digest(e.row_hash, expected_hash)
+        )
         if not is_valid:
             verified_chain = False
-            
+
         serialized_events.append({
             "id": e.id,
             "prev_hash": e.prev_hash,
@@ -295,7 +312,7 @@ def get_audit_trail(db: Session = Depends(get_db), user: dict = Depends(require_
             "is_valid": is_valid
         })
         prev_hash_tracker = e.row_hash
-        
+
     return {
         "verified_chain": verified_chain,
         "events": serialized_events[::-1]
@@ -360,7 +377,7 @@ def request_erasure(payload: ErasureRequest, db: Session = Depends(get_db), user
             }
         )
         raise HTTPException(
-            status_code=400, 
+            status_code=400,
             detail=f"Security exception: Table '{payload.target_table}' is a JAILED category and cannot be erased by any tier."
         )
 

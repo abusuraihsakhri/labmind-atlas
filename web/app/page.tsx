@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
 
-const PROXY_API = process.env.NEXT_PUBLIC_AGENT_API || "http://localhost:3000";
+const PROXY_API = "";
 
 interface Specimen {
   specimen_token: string;
@@ -18,7 +19,7 @@ interface Action {
   agent_name: string;
   specimen_token: string;
   action_type: string;
-  payload: any;
+  payload: unknown;
   confidence: number;
   reasoning: string;
   status: string;
@@ -30,6 +31,13 @@ export default function DashboardPage() {
   const [actions, setActions] = useState<Action[]>([]);
   const [trustStage, setTrustStage] = useState<string>("SUGGEST");
   const [userRole, setUserRole] = useState<string>("Operator (Tier 2)");
+  useEffect(() => {
+    fetch("/api/session", { cache: "no-store" })
+      .then(response => response.ok ? response.json() : Promise.reject(new Error("Authentication required")))
+      .then(data => setUserRole(data.role))
+      .catch(() => { window.location.href = "/login"; });
+  }, []);
+
   const [chatInput, setChatInput] = useState("");
   const [chatMessages, setChatMessages] = useState<Array<{ sender: "user" | "supervisor"; text: string }>>([
     { sender: "supervisor", text: "Hello, I am ATLAS Supervisor. How can I assist you with lab workflows today?" }
@@ -58,7 +66,7 @@ export default function DashboardPage() {
           const stageData = await stageRes.json();
           setTrustStage(stageData.trust_stage);
         }
-        setIsOffline(false);
+        setIsOffline(!specRes.ok || !actRes.ok || !stageRes.ok);
       } catch (err) {
         console.error("Dashboard failed to connect to agent service, using mock/offline state:", err);
         setIsOffline(true);
@@ -168,6 +176,8 @@ export default function DashboardPage() {
         <div style={{ display: "flex", alignItems: "center", gap: "24px" }}>
           <button 
             onClick={toggleTrustStage}
+            disabled={!userRole.startsWith('Administrator')}
+            title={userRole.startsWith('Administrator') ? 'Change trust stage' : 'Administrator access required'}
             style={{ 
               background: "rgba(255,255,255,0.05)", 
               border: "1px solid var(--border-color)", 
@@ -181,7 +191,7 @@ export default function DashboardPage() {
           >
             Toggle Stage: {trustStage}
           </button>
-          <a href="/audit" style={{
+          <Link href="/audit" style={{
               background: "rgba(255,255,255,0.05)", 
               border: "1px solid var(--border-color)", 
               color: "hsl(var(--color-primary))", 
@@ -193,27 +203,16 @@ export default function DashboardPage() {
               textDecoration: "none"
           }}>
             Governance & Audit
-          </a>
+          </Link>
+          <button type="button" onClick={async () => {
+            await fetch("/api/session", {method:"DELETE"});
+            window.location.href = "/login";
+          }} style={{border:"1px solid var(--border-color)",color:"var(--text-secondary)",background:"transparent",borderRadius:6,padding:"6px 10px",cursor:"pointer"}}>
+            Sign out
+          </button>
           <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
             <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>Active Actor</span>
-            <select
-              value={userRole}
-              onChange={(e) => setUserRole(e.target.value)}
-              style={{
-                background: "rgba(0,0,0,0.3)",
-                border: "1px solid var(--border-color)",
-                color: "#fff",
-                padding: "4px 8px",
-                borderRadius: "4px",
-                outline: "none",
-                fontSize: "0.9rem",
-                fontWeight: "500",
-                cursor: "pointer"
-              }}
-            >
-              <option value="Operator (Tier 2)">Operator (Tier 2)</option>
-              <option value="Administrator (Tier 3)">Administrator (Tier 3)</option>
-            </select>
+            <strong style={{fontSize:"0.85rem",color:"var(--text-primary)"}}>{userRole}</strong>
           </div>
         </div>
       </header>

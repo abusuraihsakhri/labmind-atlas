@@ -1,7 +1,4 @@
 import os
-import hmac
-import hashlib
-import pytest
 
 os.environ["TOKEN_SALT"] = "test-salt-for-unit-tests"
 os.environ["RE_ID_MAP_KEY"] = "test-key"
@@ -13,7 +10,7 @@ from cryptography.fernet import Fernet
 TEST_KEY = Fernet.generate_key().decode()
 os.environ["RE_ID_MAP_KEY"] = TEST_KEY
 
-from gateway.main import generate_token, encrypt_value, decrypt_value
+from gateway.main import generate_token, encrypt_value  # noqa: E402
 
 
 class TestTokenGeneration:
@@ -42,5 +39,4 @@ class TestEncryption:
     def test_encrypt_decrypt_roundtrip(self):
         original = "John Doe"
         encrypted = encrypt_value(original)
-        decrypted = decrypt_value.__wrapped__(encrypted) if hasattr(decrypt_value, '__wrapped__') else None
         assert encrypted != original
