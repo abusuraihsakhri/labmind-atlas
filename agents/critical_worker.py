@@ -7,7 +7,7 @@ from typing import Optional
 from sqlalchemy.orm import Session
 from agents.llm_factory import get_llm
 from agents.atlas import ContextPacket
-from agents.base import assert_no_phi, ActionProposed, ActionExecutor
+from agents.base import ActionProposed
 from agents.models import CriticalValueEvent
 from agents.notifications import notify_critical_value
 from datetime import datetime, timezone
@@ -21,11 +21,11 @@ class CriticalValueRouterWorker:
     def analyze(self, context: ContextPacket, db: Session, clinician_token: str) -> Optional[ActionProposed]:
         # Formulate prompt from de-identified context comments
         comments_text = " ".join([h["comments"] for h in context.history if h.get("comments")])
-        
+
         if not comments_text:
             return None
 
-        system_prompt = f"""You are the LabMind Critical Value Router Worker Agent.
+        system_prompt = """You are the LabMind Critical Value Router Worker Agent.
 Determine if the following de-identified comments contain a critical/panic diagnostic value requiring immediate clinician notification.
 
 Task:
@@ -100,7 +100,7 @@ Task:
         # Regex heuristics for panic/critical values
         pattern = re.compile(r'(critical value|panic|potassium level measured at|platelet count critical|malignant neoplasm)', re.IGNORECASE)
         match = pattern.search(text)
-        
+
         if match:
             # Extract summary
             summary = "Critical laboratory value detected"
@@ -110,14 +110,14 @@ Task:
                 summary = "Critical Platelet count (15,000 /uL)"
             elif "malignant" in text.lower():
                 summary = "Malignant neoplasm detected on frozen section"
-                
+
             return {
                 "is_critical": True,
                 "value_summary": summary,
                 "confidence": 0.99,
                 "reasoning": f"Regex matched critical term: '{match.group(0)}'."
             }
-            
+
         return {
             "is_critical": False,
             "value_summary": "",

@@ -3,7 +3,7 @@ import json
 import uuid
 import hashlib
 import hmac
-from typing import Literal, List, Optional
+from typing import Literal
 from pydantic import BaseModel
 from datetime import datetime, timezone
 from sqlalchemy.orm import Session
@@ -23,15 +23,15 @@ def assert_no_phi(text: str):
     phone_pattern = re.compile(r'\+?\d{1,4}[-.\s]?\(?\d{1,3}?\)?[-.\s]?\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,9}')
     # Specific keywords indicating untokenized info
     sensitive_keywords = ["John Doe", "Jane Smith", "Alice Johnson", "Dr. Gregory House", "Dr. Meredith Grey"]
-    
+
     if mrn_pattern.search(text):
         raise SecurityException("Security violation: Outbound prompt contains raw MRN pattern.")
-    
+
     if phone_pattern.search(text):
         # Allow phone match only if it is short or does not match a typical raw lab record comment format
         if len(re.findall(r'\d', text)) > 9:
             raise SecurityException("Security violation: Outbound prompt contains raw phone number format.")
-            
+
     for kw in sensitive_keywords:
         if kw in text:
             raise SecurityException(f"Security violation: Outbound prompt contains raw PHI keyword: '{kw}'")
@@ -75,23 +75,23 @@ AUDIT_SECRET_KEY = AUDIT_SECRET_KEY.encode()
 class ActionExecutor:
     @staticmethod
     def log_audit_event(
-        db: Session, 
-        actor: str, 
-        actor_tier: str, 
-        event_type: str, 
+        db: Session,
+        actor: str,
+        actor_tier: str,
+        event_type: str,
         details: dict
     ) -> str:
         # Fetch the last audit event to get prev_hash
         last_event = db.query(AuditEvent).order_by(AuditEvent.id.desc()).first()
         prev_hash = last_event.row_hash if last_event else "0" * 64
-        
+
         # Calculate row hash
         created_at = datetime.now(timezone.utc)
         now = created_at.isoformat()
         details_str = json.dumps(details, sort_keys=True)
         hash_input = f"{prev_hash}|{actor}|{actor_tier}|{event_type}|{details_str}|{now}".encode('utf-8')
         row_hash = hmac.new(AUDIT_SECRET_KEY, hash_input, hashlib.sha256).hexdigest()
-        
+
         audit_entry = AuditEvent(
             prev_hash=prev_hash,
             row_hash=row_hash,
@@ -101,24 +101,24 @@ class ActionExecutor:
             detail_jsonb=details,
             created_at=created_at
         )
-        
+
         db.add(audit_entry)
         db.commit()
         return row_hash
 
     @staticmethod
     def execute(
-        db: Session, 
-        proposal: ActionProposed, 
-        agent_name: str, 
+        db: Session,
+        proposal: ActionProposed,
+        agent_name: str,
         trust_stage: Literal["OBSERVE", "SUGGEST"] = "SUGGEST"
     ) -> dict:
         from agents.metrics import actions_proposed_total
         action_id = str(uuid.uuid4())
-        
+
         # Validate confidence is within bounds
         confidence = max(0.0, min(1.0, proposal.confidence))
-        
+
         # 1. 🔒 Observe trust stage constraint: takes NO action
         if trust_stage == "OBSERVE":
             status = "rejected"
@@ -127,7 +127,7 @@ class ActionExecutor:
             # Under SUGGEST, all proposed actions require manual operator approval
             status = "proposed"
             reasoning = proposal.reasoning
-            
+
         action_db = ActionModel(
             id=action_id,
             agent_name=agent_name,
@@ -161,7 +161,7 @@ class ActionExecutor:
                 "trust_stage": trust_stage
             }
         )
-        
+
         return {
             "action_id": action_id,
             "status": status,

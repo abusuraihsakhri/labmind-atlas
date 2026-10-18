@@ -5,7 +5,7 @@ import signal
 import threading
 import logging
 import redis
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 from agents.database import SessionLocal
 from agents.models import SpecimenEvent, SpecimenState
@@ -38,7 +38,7 @@ def process_stream_event(event_data: dict, db: Session):
 
         occurred_at = datetime.fromisoformat(event_data["occurred_at"])
         received_at = datetime.fromisoformat(event_data["received_at"])
-        
+
         event_entry = SpecimenEvent(
             id=event_data["event_id"],
             specimen_token=event_data["specimen_token"],
@@ -51,15 +51,15 @@ def process_stream_event(event_data: dict, db: Session):
             meta_jsonb={"comments": event_data["de_identified_comments"]}
         )
         db.add(event_entry)
-        
+
         # Update or Create SpecimenState (Working memory mirror)
         state = db.query(SpecimenState).filter(SpecimenState.specimen_token == event_data["specimen_token"]).first()
-        
+
         if not state:
             # First time seeing this specimen (accessioning)
             nominal_minutes = TAT_MAP.get(event_data["test_code"], 60)
             expected_signout = occurred_at + timedelta(minutes=nominal_minutes)
-            
+
             state = SpecimenState(
                 specimen_token=event_data["specimen_token"],
                 current_status=event_data["status"],
@@ -73,7 +73,7 @@ def process_stream_event(event_data: dict, db: Session):
             # Update status and timestamps
             state.current_status = event_data["status"]
             state.last_event_at = occurred_at
-            
+
         db.commit()
         elapsed = _time.monotonic() - start
         pipeline_processing_seconds.observe(elapsed)
@@ -82,11 +82,11 @@ def process_stream_event(event_data: dict, db: Session):
             status=event_data["status"]
         ).inc()
         logger.info("Processed event %s for specimen %s (%.3fs)", event_data['event_type'], event_data['specimen_token'], elapsed)
-        
+
         # Trigger Workflow Manager evaluation
         from agents.workflow_manager import WorkflowManagerAgent
         from agents.main import GLOBAL_CONFIG
-        
+
         manager = WorkflowManagerAgent()
         manager.process_specimen_update(
             specimen_token=event_data["specimen_token"],
@@ -94,7 +94,7 @@ def process_stream_event(event_data: dict, db: Session):
             clinician_token=event_data["clinician_token"],
             trust_stage=GLOBAL_CONFIG.get("trust_stage", "SUGGEST")
         )
-        
+
     except Exception as e:
 
         db.rollback()
@@ -111,9 +111,9 @@ def start_pipeline_listener():
 
     r = redis.Redis.from_url(REDIS_URL)
     stream_name = "specimen_events_stream"
-    
+
     logger.info("Pipeline listener starting. Monitoring Redis stream: %s", stream_name)
-    
+
     # Create the stream if it does not exist
     try:
         r.xgroup_create(stream_name, "agents_group", id="0", mkstream=True)
@@ -125,7 +125,7 @@ def start_pipeline_listener():
             messages = r.xreadgroup("agents_group", "consumer_1", {stream_name: ">"}, count=BATCH_SIZE, block=2000)
             if not messages:
                 continue
-                
+
             for stream, stream_msgs in messages:
                 batch = []
                 for msg_id, payload in stream_msgs:

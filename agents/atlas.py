@@ -1,9 +1,8 @@
-import os
 import logging
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 from sentence_transformers import SentenceTransformer
-from agents.models import SpecimenState, SpecimenEvent, EpisodicMemory, SemanticRule
+from agents.models import SpecimenState, SpecimenEvent, SemanticRule
 
 logger = logging.getLogger("labmind.atlas")
 
@@ -54,7 +53,7 @@ def assemble_context(specimen_token: str, db: Session) -> ContextPacket:
     # Generate query embedding from the comments/history summary
     summary_query = " ".join([h["comments"] for h in history if h.get("comments")]) or "Normal specimen processing"
     query_vector = embedding_model.encode(summary_query).tolist()
-    
+
     # Run pgvector distance search
     episodic_recalls = []
     try:
@@ -66,11 +65,11 @@ def assemble_context(specimen_token: str, db: Session) -> ContextPacket:
             ORDER BY distance ASC
             LIMIT 3
         """)
-        
+
         # pgvector expects string representation like '[0.1, 0.2, ...]'
         vector_str = "[" + ",".join(map(str, query_vector)) + "]"
         result = db.execute(query, {"embedding_val": vector_str})
-        
+
         for row in result:
             # Cosine distance matches the configured pgvector index.
             if row[5] < 0.8: # Adjust distance threshold as appropriate
@@ -91,7 +90,7 @@ def assemble_context(specimen_token: str, db: Session) -> ContextPacket:
     if test_codes:
         rules = db.query(SemanticRule).filter(
             SemanticRule.key.in_(test_codes),
-            SemanticRule.valid_to == None
+            SemanticRule.valid_to.is_(None)
         ).all()
         for r in rules:
             semantic_rules.append({

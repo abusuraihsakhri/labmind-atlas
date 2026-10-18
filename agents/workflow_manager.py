@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from agents.atlas import assemble_context
 from agents.tat_worker import TATMonitorWorker
 from agents.critical_worker import CriticalValueRouterWorker
-from agents.base import ActionExecutor, ActionProposed
+from agents.base import ActionExecutor
 
 logger = logging.getLogger("labmind.workflow_manager")
 
@@ -13,9 +13,9 @@ class WorkflowManagerAgent:
         self.critical_worker = CriticalValueRouterWorker()
 
     def process_specimen_update(
-        self, 
-        specimen_token: str, 
-        db: Session, 
+        self,
+        specimen_token: str,
+        db: Session,
         clinician_token: str,
         trust_stage: str = "SUGGEST"
     ) -> list[dict]:

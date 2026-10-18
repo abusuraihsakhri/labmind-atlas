@@ -1,11 +1,10 @@
-import os
 import json
 import logging
 from typing import Optional
 from sqlalchemy.orm import Session
 from agents.llm_factory import get_llm
 from agents.atlas import ContextPacket
-from agents.base import assert_no_phi, ActionProposed, ActionExecutor
+from agents.base import ActionProposed
 from agents.models import SpecimenState
 
 logger = logging.getLogger("labmind.tat_worker")
@@ -20,7 +19,7 @@ class TATMonitorWorker:
             f"- Event {h['event_type']} ({h['status']}) occurred at {h['occurred_at']}. Comments: {h['comments']}"
             for h in context.history
         ])
-        
+
         # Pull threshold values from rules if available
         rules_text = ""
         for rule in context.semantic_rules:
@@ -95,18 +94,18 @@ Task:
         # Simple heuristic fallback
         # If specimen is stuck in ACCESSIONED or PROCESSING for a prolonged period, increase risk.
         from datetime import datetime, timezone
-        
+
         expected_str = context.working_state.get("expected_signout_at")
         if not expected_str:
             return {"risk_level": "green", "confidence": 1.0, "reasoning": "No expected sign-out time", "propose_alert": False}
-            
+
         expected_dt = datetime.fromisoformat(expected_str)
         now = datetime.now(timezone.utc)
-        
+
         time_left = (expected_dt - now).total_seconds() / 60.0
-        
+
         status = context.working_state.get("current_status", "")
-        
+
         if time_left < 0 and status != "SIGNED_OUT":
             return {
                 "risk_level": "red",
@@ -121,7 +120,7 @@ Task:
                 "reasoning": f"Turnaround Time target is in 15 minutes. Current status is '{status}'.",
                 "propose_alert": True
             }
-        
+
         return {
             "risk_level": "green",
             "confidence": 0.90,
