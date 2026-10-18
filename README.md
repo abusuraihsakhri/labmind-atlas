@@ -1,12 +1,14 @@
 # LabMind ATLAS
 
+### [Open the Live Application →](https://abusuraihsakhri.github.io/labmind-atlas/)
+
 Laboratory workflow monitoring and governance prototype. LabMind is designed as an **additive read-layer** alongside an existing Laboratory Information System (LIS); it does not replace the LIS.
 
 **Project stage:** research/MVP prototype. **Not clinically validated, not for patient care.** The static browser demonstration uses only invented specimens. It is not connected to a live laboratory or to the Python agent service.
 
 ## Explore the browser demonstration
 
-The interactive, dependency-free demonstration is in [`docs/`](docs/). GitHub Actions is configured to publish it using GitHub Pages after Pages has been enabled for this repository. The public URL should be added here only once deployment and functionality have been verified.
+The [live demonstration](https://abusuraihsakhri.github.io/labmind-atlas/) is a dependency-free static application maintained in [`docs/`](docs/). GitHub Actions publishes it to GitHub Pages and checks the deployed HTML, JavaScript and CSS URLs.
 
 The browser demonstration supports:
 
@@ -68,7 +70,7 @@ The gateway is designed to tokenize direct identifiers and de-identify free text
 
 The deployed web dashboard uses a signed, HTTP-only session tied to a server-configured Tier 2 or Tier 3 password; it is not a full hospital identity and authorization system. For production use, integrate an approved SSO/MFA provider with attributable per-user audit trails and login rate limiting.
 
-The current code is a prototype. Clinical critical-value thresholds, response times, notification delivery, laboratory-specific TAT rules, model output and the audit subsystem require independent validation before clinical deployment.
+The current code is a prototype. Clinical critical-value thresholds, response times, notification delivery, laboratory-specific TAT rules, model output and the audit subsystem require independent validation before clinical deployment. High-priority work remains on [critical-value routing safety](https://github.com/abusuraihsakhri/labmind-atlas/issues/2) and [stream processing reliability](https://github.com/abusuraihsakhri/labmind-atlas/issues/3).
 
 ## Browser compatibility and license
 
