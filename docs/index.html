@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Interactive synthetic-data demonstration of LabMind ATLAS laboratory workflow monitoring, human approvals and audit events.">
+  <meta name="theme-color" content="#0a1324">
+  <title>LabMind ATLAS | Interactive laboratory workflow demo</title>
+  <link rel="stylesheet" href="./styles.css">
+  <script type="module" src="./app.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#demo">Skip to interactive demonstration</a>
+  <div class="shell">
+    <header class="topbar">
+      <a class="brand" href="./" aria-label="LabMind ATLAS home"><span class="brand-symbol" aria-hidden="true">L<span>.</span></span><span>LabMind <strong>ATLAS</strong></span></a>
+      <nav aria-label="Primary navigation"><a href="#demo">Live simulation</a><a href="#architecture">Architecture</a><a href="#limits">Scope &amp; safety</a><a class="external" href="https://github.com/abusuraihsakhri/labmind-atlas">Source ↗</a></nav>
+    </header>
+    <main>
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="eyebrow"><span class="pulse" aria-hidden="true"></span> PUBLIC SANDBOX · SYNTHETIC DATA ONLY</div>
+        <h1 id="hero-title">Laboratory intelligence, <em>with humans in control.</em></h1>
+        <p class="lead">LabMind ATLAS is an additive intelligence layer for laboratory information systems. Explore how specimen monitoring, turnaround-time (TAT) signals, critical-value review, and governed human decisions could work together.</p>
+        <div class="hero-actions"><a class="button button-primary" href="#demo">Explore interactive demo <span aria-hidden="true">↗</span></a><a class="button button-outline" href="#architecture">View system design</a></div>
+        <div class="notice" role="note"><strong>Demonstration, not a clinical system.</strong> This page uses invented specimens and deterministic browser-side rules. It does not connect to an LIS, send notifications, run language models, or perform patient-care actions.</div>
+      </section>
+
+      <section id="demo" class="demo" aria-labelledby="demo-title">
+        <div class="section-head"><div><p class="overline">01 / INTERACTIVE WORKFLOW</p><h2 id="demo-title">ATLAS operations sandbox</h2><p>Trigger synthetic events to see the workflow respond. All state is temporary and remains in this browser tab.</p></div><span class="pill pill-demo">SIMULATION ONLY</span></div>
+        <div class="toolbar" aria-label="Demo controls">
+          <div class="mode-control"><span class="small-label">Trust stage</span><div class="segmented" role="group" aria-label="Trust stage"><button id="observe" type="button">OBSERVE</button><button id="suggest" type="button">SUGGEST</button></div></div>
+          <div class="scenario-control"><span class="small-label">Inject synthetic event</span><div class="control-buttons"><button type="button" id="inject-delay" class="button button-warning">Simulate TAT breach</button><button type="button" id="inject-critical" class="button button-danger">Simulate critical value</button><button type="button" id="advance-specimen" class="button button-outline">Sign out specimen</button></div></div>
+          <button id="reset" type="button" class="button button-subtle">Reset demo</button>
+        </div>
+        <div class="metrics" aria-label="Simulation metrics">
+          <div class="metric"><span class="small-label">Tracked specimens</span><strong id="metric-specimens">0</strong><small>Synthetic case tokens</small></div>
+          <div class="metric"><span class="small-label">TAT at risk</span><strong id="metric-risk">0</strong><small>Yellow / red</small></div>
+          <div class="metric"><span class="small-label">Awaiting approval</span><strong id="metric-actions">0</strong><small>Human decision required</small></div>
+          <div class="metric"><span class="small-label">Critical alerts open</span><strong id="metric-critical">0</strong><small>Require acknowledgement</small></div>
+        </div>
+        <div class="workspace">
+          <section class="panel specimens" aria-labelledby="specimen-title"><div class="panel-title"><h3 id="specimen-title">Specimen tracker</h3><span class="subtle">TAT signals based on simulated due times</span></div><div class="table-scroll"><table><thead><tr><th>Token / test</th><th>Status</th><th>Expected</th><th>Risk</th></tr></thead><tbody id="specimen-rows"></tbody></table></div></section>
+          <section class="panel actions" aria-labelledby="action-title"><div class="panel-title"><h3 id="action-title">Human approval queue</h3><span class="subtle" id="stage-message">SUGGEST stage</span></div><div id="action-list" class="stack" aria-live="polite"></div></section>
+          <section class="panel alerts" aria-labelledby="alert-title"><div class="panel-title"><h3 id="alert-title">Critical-value acknowledgement</h3><span class="subtle">Simulated acknowledgement only</span></div><div id="alert-list" class="stack" aria-live="polite"></div></section>
+          <section class="panel audit" aria-labelledby="audit-title"><div class="panel-title"><h3 id="audit-title">Local event trail</h3><button type="button" class="link-button" id="download-audit">Download CSV ↓</button></div><ol id="audit-list" class="timeline" aria-live="polite"></ol></section>
+        </div>
+        <p id="feedback" class="feedback" role="status" aria-live="polite">Sandbox initialized.</p>
+      </section>
+
+      <section id="architecture" class="concept" aria-labelledby="architecture-title"><div class="section-head"><div><p class="overline">02 / PLATFORM CONCEPT</p><h2 id="architecture-title">Designed to complement the LIS</h2><p>The production architecture has components that cannot run on a static GitHub Pages host.</p></div></div>
+        <div class="architecture" aria-label="Conceptual four-stage pipeline">
+          <div class="arch-node"><span class="arch-index">01 · INPUT</span><h3>Existing LIS</h3><p>Laboratory events through a simulator or compatible interface.</p></div>
+          <span class="arch-arrow" aria-hidden="true">→</span>
+          <div class="arch-node"><span class="arch-index">02 · LOCAL PRIVACY</span><h3>On-prem gateway</h3><p>Identifier tokenization and de-identification boundary.</p></div>
+          <span class="arch-arrow" aria-hidden="true">→</span>
+          <div class="arch-node"><span class="arch-index">03 · ORCHESTRATION</span><h3>ATLAS services</h3><p>Redis/Postgres context, TAT and critical-value workers.</p></div>
+          <span class="arch-arrow" aria-hidden="true">→</span>
+          <div class="arch-node"><span class="arch-index">04 · OVERSIGHT</span><h3>Human dashboard</h3><p>Monitor risk, review proposed actions and inspect audit history.</p></div>
+        </div>
+        <div class="feature-grid"><article><span class="feature-num">A /</span><h3>Observe before intervention</h3><p>OBSERVE monitors synthetic events without proposing actions. SUGGEST adds decisions for human review; neither mode autonomously changes patient care here.</p></article><article><span class="feature-num">B /</span><h3>Safety-critical escalation</h3><p>The demo separates the identification of a critical value from acknowledgement, preserving a visible human responsibility.</p></article><article><span class="feature-num">C /</span><h3>Traceable decisions</h3><p>Approvals, dismissals and acknowledgements are added to a local event timeline. The real service requires durable, authenticated auditing.</p></article></div>
+      </section>
+
+      <section id="limits" class="limits" aria-labelledby="limits-title"><p class="overline">03 / RESPONSIBLE DEPLOYMENT</p><h2 id="limits-title">What this demonstration does—and does not—prove</h2><div class="limits-grid"><div><h3>Available in this browser demo</h3><ul><li>Deterministic TAT risk indicators</li><li>Synthetic event injection and specimen sign-out</li><li>OBSERVE / SUGGEST staging</li><li>Human approval, dismissal and alert acknowledgement</li><li>Temporary audit timeline with CSV export</li></ul></div><div><h3>Requires the real backend and validation</h3><ul><li>Authenticated users, RBAC, and durable logs</li><li>HL7 ingestion, PHI handling and token resolution</li><li>Redis, PostgreSQL and worker orchestration</li><li>Model inference, communications and clinical thresholds</li><li>Laboratory-specific prospective validation and governance</li></ul></div></div><p class="scope-note">Not a medical device, diagnostic aid, real alerting service, or validated clinical decision-support tool. Do not enter patient information. Review <a href="https://github.com/abusuraihsakhri/labmind-atlas/blob/main/Labmind_spec.md">the build specification</a> and <a href="https://github.com/abusuraihsakhri/labmind-atlas">the source repository</a> for the implementation and its limitations.</p></section>
+    </main>
+    <footer><span>LabMind ATLAS · Research prototype / demonstration</span><a href="https://github.com/abusuraihsakhri/labmind-atlas">GitHub repository ↗</a></footer>
+  </div>
+</body>
+</html>
