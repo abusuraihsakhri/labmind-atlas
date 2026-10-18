@@ -4,6 +4,7 @@ import uuid
 import re
 import logging
 from typing import Optional
+from sqlalchemy.orm import Session
 from agents.llm_factory import get_llm
 from agents.atlas import ContextPacket
 from agents.base import assert_no_phi, ActionProposed, ActionExecutor
