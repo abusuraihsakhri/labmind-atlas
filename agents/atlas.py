@@ -61,7 +61,7 @@ def assemble_context(specimen_token: str, db: Session) -> ContextPacket:
         # Construct raw sql for pgvector distance query (<-> operator)
         query = text("""
             SELECT id, specimen_token, summary_text, outcome, occurred_at,
-                   (embedding <-> :embedding_val::vector) as distance
+                   (embedding <=> CAST(:embedding_val AS vector)) as distance
             FROM episodic_memory
             ORDER BY distance ASC
             LIMIT 3
@@ -72,7 +72,7 @@ def assemble_context(specimen_token: str, db: Session) -> ContextPacket:
         result = db.execute(query, {"embedding_val": vector_str})
         
         for row in result:
-            # Check for threshold. If distance is close enough (e.g. cosine distance < 0.6)
+            # Cosine distance matches the configured pgvector index.
             if row[5] < 0.8: # Adjust distance threshold as appropriate
                 episodic_recalls.append({
                     "summary_text": row[2],
