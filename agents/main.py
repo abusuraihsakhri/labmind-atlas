@@ -11,6 +11,7 @@ from pydantic import BaseModel
 from datetime import datetime, timezone, timedelta
 from typing import Optional
 import hmac
+import hashlib
 import os
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from slowapi import Limiter
@@ -162,6 +163,8 @@ def approve_action(request: Request, action_id: str, db: Session = Depends(get_d
     if not action:
         raise HTTPException(status_code=404, detail="Action not found")
     
+    if action.status != "proposed":
+        raise HTTPException(status_code=409, detail="Only pending actions may be approved")
     action.status = "approved"
     action.resolved_at = datetime.now(timezone.utc)
     action.resolved_by = f"{user['user']} ({user['tier']})"
@@ -188,6 +191,8 @@ def dismiss_action(request: Request, action_id: str, db: Session = Depends(get_d
     if not action:
         raise HTTPException(status_code=404, detail="Action not found")
     
+    if action.status != "proposed":
+        raise HTTPException(status_code=409, detail="Only pending actions may be dismissed")
     action.status = "dismissed"
     action.resolved_at = datetime.now(timezone.utc)
     action.resolved_by = f"{user['user']} ({user['tier']})"
@@ -280,7 +285,18 @@ def get_audit_trail(db: Session = Depends(get_db), user: dict = Depends(require_
     
     for e in events:
         # Verify prev_hash matches tracker
-        is_valid = (e.prev_hash == prev_hash_tracker)
+        # Verify each row's HMAC, not only the predecessor pointer.
+        signature_data = (
+            f"{e.prev_hash}|{e.actor}|{e.actor_tier}|{e.event_type}|"
+            f"{json.dumps(e.detail_jsonb, sort_keys=True)}|{e.created_at.isoformat()}"
+        ).encode("utf-8")
+        expected_hash = hmac.new(
+            os.environ["AUDIT_SECRET_KEY"].encode(), signature_data, hashlib.sha256
+        ).hexdigest()
+        is_valid = (
+            e.prev_hash == prev_hash_tracker
+            and hmac.compare_digest(e.row_hash, expected_hash)
+        )
         if not is_valid:
             verified_chain = False
             
