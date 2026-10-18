@@ -18,7 +18,7 @@ interface Action {
   agent_name: string;
   specimen_token: string;
   action_type: string;
-  payload: any;
+  payload: unknown;
   confidence: number;
   reasoning: string;
   status: string;
