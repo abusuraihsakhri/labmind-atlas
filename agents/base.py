@@ -86,7 +86,8 @@ class ActionExecutor:
         prev_hash = last_event.row_hash if last_event else "0" * 64
         
         # Calculate row hash
-        now = datetime.now(timezone.utc).isoformat()
+        created_at = datetime.now(timezone.utc)
+        now = created_at.isoformat()
         details_str = json.dumps(details, sort_keys=True)
         hash_input = f"{prev_hash}|{actor}|{actor_tier}|{event_type}|{details_str}|{now}".encode('utf-8')
         row_hash = hmac.new(AUDIT_SECRET_KEY, hash_input, hashlib.sha256).hexdigest()
@@ -98,7 +99,7 @@ class ActionExecutor:
             actor_tier=actor_tier,
             event_type=event_type,
             detail_jsonb=details,
-            created_at=datetime.now(timezone.utc)
+            created_at=created_at
         )
         
         db.add(audit_entry)
