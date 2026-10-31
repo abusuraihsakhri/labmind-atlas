@@ -103,8 +103,10 @@ class SafetyContainmentTests(unittest.TestCase):
     def test_notification_entrypoint_blocks_even_when_destinations_are_present(self):
         from agents import notifications
 
-        with patch.object(notifications, "send_email", side_effect=AssertionError("SMTP invoked")), \\
-             patch.object(notifications, "send_sms", side_effect=AssertionError("SMS invoked")):
+        with (
+            patch.object(notifications, "send_email", side_effect=AssertionError("SMTP invoked")),
+            patch.object(notifications, "send_sms", side_effect=AssertionError("SMS invoked")),
+        ):
             result = notifications.notify_critical_value(
                 clinician_email="synthetic@example.invalid",
                 clinician_phone="+15555550123",
