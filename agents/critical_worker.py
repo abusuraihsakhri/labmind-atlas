@@ -1,6 +1,4 @@
-import os
 import json
-import uuid
 import re
 import logging
 from typing import Optional
@@ -8,9 +6,6 @@ from sqlalchemy.orm import Session
 from agents.llm_factory import get_llm
 from agents.atlas import ContextPacket
 from agents.base import ActionProposed
-from agents.models import CriticalValueEvent
-from agents.notifications import notify_critical_value
-from datetime import datetime, timezone
 
 logger = logging.getLogger("labmind.critical_worker")
 
@@ -26,7 +21,7 @@ class CriticalValueRouterWorker:
             return None
 
         system_prompt = """You are the LabMind Critical Value Router Worker Agent.
-Determine if the following de-identified comments contain a critical/panic diagnostic value requiring immediate clinician notification.
+Identify free-text signals that may warrant human review. These signals are NOT validated critical values and must never initiate clinician notification.
 
 Task:
 1. Scan for critical terms like "CRITICAL VALUE", "PANIC", "malignant", "potassium critical", etc.
@@ -60,38 +55,27 @@ Task:
             result = self._fallback_regex_analysis(comments_text)
 
         if result.get("is_critical"):
-            # Create a jailed critical value event row (10y retention, never erasable)
-            critical_event_id = str(uuid.uuid4())
-            critical_entry = CriticalValueEvent(
-                id=critical_event_id,
-                specimen_token=context.working_state.get("specimen_token"),
-                value_summary=result["value_summary"],
-                routed_to_token=clinician_token,
-                routed_at=datetime.now(timezone.utc)
+            # Free-text/LLM findings are unverified. Never persist a routed alert,
+            # make an external call, or imply clinical threshold validation here.
+            logger.warning(
+                "Unverified critical-like free-text signal for specimen %s; "
+                "internal review only (external routing disabled).",
+                context.working_state.get("specimen_token"),
             )
-            db.add(critical_entry)
-            db.commit()
-
-            logger.warning("Detected panic value for specimen %s. Logged in jailed table.", context.working_state.get('specimen_token'))
-
-            notify_critical_value(
-                clinician_email=os.getenv("ALERT_EMAIL"),
-                clinician_phone=os.getenv("ALERT_PHONE"),
-                specimen_token=context.working_state.get("specimen_token", ""),
-                value_summary=result["value_summary"],
-                routed_at=datetime.now(timezone.utc).isoformat(),
-            )
-
             return ActionProposed(
-                action_type="ROUTE_CRITICAL_ALERT",
+                action_type="REVIEW_UNVERIFIED_CRITICAL_SIGNAL",
                 specimen_token=context.working_state.get("specimen_token"),
                 payload={
-                    "critical_event_id": critical_event_id,
                     "value_summary": result["value_summary"],
-                    "routed_to_token": clinician_token
+                    "clinician_token": clinician_token,
+                    "validation_status": "unverified_free_text",
+                    "dispatch_allowed": False,
                 },
                 confidence=result["confidence"],
-                reasoning=result.get("reasoning", "Critical/Panic laboratory result flagged for routing.")
+                reasoning=result.get(
+                    "reasoning",
+                    "Unverified free-text signal for human review; not a validated critical value.",
+                ),
             )
 
         return None

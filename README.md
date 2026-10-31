@@ -72,6 +72,12 @@ The deployed web dashboard uses a signed, HTTP-only session tied to a server-con
 
 The current code is a prototype. Clinical critical-value thresholds, response times, notification delivery, laboratory-specific TAT rules, model output and the audit subsystem require independent validation before clinical deployment. High-priority work remains on [critical-value routing safety](https://github.com/abusuraihsakhri/labmind-atlas/issues/2) and [stream processing reliability](https://github.com/abusuraihsakhri/labmind-atlas/issues/3).
 
+## Clinical notification containment (P0)
+
+The Python prototype now defaults to OBSERVE and **blocks all external critical-value notifications**, including if SMTP/SMS configuration is present. Free-text/LLM matches produce only unverified internal review proposals; they do not create a routed critical-value record. Switching to SUGGEST or approving one of these review proposals does not authorize notification. No clinical critical-value routing is implemented or approved.
+
+The event-stream integrity, structured laboratory threshold validation, recipient identity, approval, acknowledged delivery and escalation work in issues #3 and #2 remains unresolved. Do not use the service for clinical decisions or urgent communication. The independent synthetic GitHub Pages demonstration is unaffected.
+
 ## Browser compatibility and license
 
 The static demo targets current evergreen browsers supporting JavaScript ES modules and Blob downloads. The full dashboard requires JavaScript and a compatible Next.js backend.

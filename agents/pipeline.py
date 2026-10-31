@@ -92,7 +92,7 @@ def process_stream_event(event_data: dict, db: Session):
             specimen_token=event_data["specimen_token"],
             db=db,
             clinician_token=event_data["clinician_token"],
-            trust_stage=GLOBAL_CONFIG.get("trust_stage", "SUGGEST")
+            trust_stage=GLOBAL_CONFIG.get("trust_stage", "OBSERVE")
         )
 
     except Exception as e:
