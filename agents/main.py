@@ -56,10 +56,10 @@ def require_tier(allowed_tiers: list):
         return user
     return role_checker
 
-# Thread-safe config for global trust stage (default to SUGGEST)
+# Thread-safe prototype config; fail closed to OBSERVE on restart.
 _config_lock = threading.Lock()
 GLOBAL_CONFIG = {
-    "trust_stage": "SUGGEST"
+    "trust_stage": "OBSERVE"
 }
 
 @asynccontextmanager
