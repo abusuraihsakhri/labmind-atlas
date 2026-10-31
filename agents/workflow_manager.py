@@ -17,7 +17,7 @@ class WorkflowManagerAgent:
         specimen_token: str,
         db: Session,
         clinician_token: str,
-        trust_stage: str = "SUGGEST"
+        trust_stage: str = "OBSERVE"
     ) -> list[dict]:
         # 1. Assemble context using ATLAS memory
         context = assemble_context(specimen_token, db)
