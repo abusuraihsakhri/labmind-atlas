@@ -109,3 +109,18 @@ CREATE TRIGGER trigger_block_audit_mutation
 BEFORE UPDATE OR DELETE ON audit_events
 FOR EACH ROW
 EXECUTE FUNCTION block_audit_mutation();
+
+-- Durable one-row-per-event handoff; execution is deferred to a retry-safe worker.
+CREATE TABLE IF NOT EXISTS workflow_outbox (
+    event_id UUID PRIMARY KEY REFERENCES specimen_events(id) ON DELETE RESTRICT,
+    specimen_token VARCHAR(255) NOT NULL,
+    clinician_token VARCHAR(255) NOT NULL,
+    state_applied BOOLEAN NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'pending',
+    attempts INTEGER NOT NULL DEFAULT 0,
+    last_error TEXT,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    processed_at TIMESTAMP WITH TIME ZONE
+);
+CREATE INDEX IF NOT EXISTS idx_workflow_outbox_status_created
+    ON workflow_outbox(status, created_at);
