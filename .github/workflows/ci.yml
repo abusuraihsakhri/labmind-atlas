@@ -90,3 +90,13 @@ jobs:
           python-version: "3.12"
       - name: Compile Python code
         run: python -m compileall -q gateway agents simulator
+
+  test-critical-safety-containment:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Verify no unapproved critical notifications
+        run: python -m unittest discover -s agents/tests -p "test_safety_containment.py" -v
