@@ -72,6 +72,40 @@ The deployed web dashboard uses a signed, HTTP-only session tied to a server-con
 
 The current code is a prototype. Clinical critical-value thresholds, response times, notification delivery, laboratory-specific TAT rules, model output and the audit subsystem require independent validation before clinical deployment. High-priority work remains on [critical-value routing safety](https://github.com/abusuraihsakhri/labmind-atlas/issues/2) and [stream processing reliability](https://github.com/abusuraihsakhri/labmind-atlas/issues/3).
 
+## Event ingestion integrity — P1 (prototype only)
+
+The agent listener now validates incoming specimen event IDs and timezone-aware
+timestamps, commits the event, ordered specimen projection and a unique pending
+workflow-outbox record in one PostgreSQL transaction, then acknowledges the
+Redis Stream ID **only after commit**. Replay is idempotent by source event ID
+and conflicting ID reuse raises an error. Older or equal-timestamp events are
+preserved as history but do not regress the latest specimen status. Gateway
+`received_at` is excluded from replay identity because the gateway may set a
+new reception timestamp for the same submitted LIS event.
+
+**Important functional limitation:** This P1 change intentionally pauses
+downstream TAT/critical workflow execution. Jobs are persisted in
+`workflow_outbox` with status `pending`; no dispatcher has been installed
+yet. The next remediation must implement idempotent outbox execution, Redis
+pending-entry reclamation, bounded retries and dead-letter handling. Failed
+ingestion stays unacknowledged, but P1 alone does **not** recover previously
+pending Redis entries. Do not use this implementation for clinical workflow.
+
+Before starting a database that has been initialized under the original
+Compose schema, apply the new migration. Back up the database and inspect its
+Alembic revision first. The Compose SQL initializer does not create an Alembic
+version record. For an existing database known to match the original 001 schema,
+baseline it once with `alembic stamp 001_initial`, then apply
+`alembic upgrade head`. Do not stamp an unknown schema or run both schema
+initializers independently without checking their state. New Compose volumes
+receive the outbox table through `infra/init-db/01-init.sql`; migration 002
+tolerates that table already existing. An un-migrated service fails closed on
+outbox inserts rather than silently acknowledging events.
+
+The CI job `test-event-ingestion-postgres` applies migrations to a fresh
+pgvector/PostgreSQL service and runs rollback, ordering, duplicate, conflicting
+ID, concurrent-ingestion and acknowledgement boundary tests.
+
 ## Browser compatibility and license
 
 The static demo targets current evergreen browsers supporting JavaScript ES modules and Blob downloads. The full dashboard requires JavaScript and a compatible Next.js backend.
