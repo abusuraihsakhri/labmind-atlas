@@ -28,7 +28,7 @@ def upgrade() -> None:
         );
         CREATE INDEX IF NOT EXISTS idx_workflow_outbox_status_created
             ON workflow_outbox(status, created_at);
-        
+
     """)
 
 
