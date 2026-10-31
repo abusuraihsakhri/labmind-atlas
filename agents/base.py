@@ -111,7 +111,7 @@ class ActionExecutor:
         db: Session,
         proposal: ActionProposed,
         agent_name: str,
-        trust_stage: Literal["OBSERVE", "SUGGEST"] = "SUGGEST"
+        trust_stage: Literal["OBSERVE", "SUGGEST"] = "OBSERVE"
     ) -> dict:
         from agents.metrics import actions_proposed_total
         action_id = str(uuid.uuid4())
@@ -120,13 +120,14 @@ class ActionExecutor:
         confidence = max(0.0, min(1.0, proposal.confidence))
 
         # 1. 🔒 Observe trust stage constraint: takes NO action
-        if trust_stage == "OBSERVE":
-            status = "rejected"
-            reasoning = "Rejected automatically: System is in read-only OBSERVE stage."
-        else:
-            # Under SUGGEST, all proposed actions require manual operator approval
+        if trust_stage == "SUGGEST":
+            # SUGGEST records proposals only; it never authorizes dispatch.
             status = "proposed"
             reasoning = proposal.reasoning
+        else:
+            # OBSERVE and any invalid stage fail closed.
+            status = "rejected"
+            reasoning = "Rejected automatically: trust stage is not SUGGEST."
 
         action_db = ActionModel(
             id=action_id,
