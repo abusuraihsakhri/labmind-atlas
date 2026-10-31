@@ -68,26 +68,14 @@ def notify_critical_value(
     specimen_token: str,
     value_summary: str,
     routed_at: str,
-):
-    subject = f"CRITICAL VALUE ALERT - Specimen {specimen_token[:12]}..."
-    html_body = f"""
-    <html>
-    <body style="font-family: Arial, sans-serif; padding: 20px;">
-        <h2 style="color: #dc2626;">CRITICAL VALUE ALERT</h2>
-        <p><strong>Specimen:</strong> {specimen_token}</p>
-        <p><strong>Value:</strong> {value_summary}</p>
-        <p><strong>Time:</strong> {routed_at}</p>
-        <hr>
-        <p style="color: #6b7280; font-size: 12px;">
-            This is an automated alert from LabMind ATLAS.
-            Please acknowledge this alert in the dashboard.
-        </p>
-    </body>
-    </html>
-    """
-    sms_message = f"CRITICAL VALUE: {value_summary} (Specimen: {specimen_token[:12]}...). Acknowledge in LabMind."
+) -> bool:
+    """Fail closed until validated thresholds, approval and delivery exist.
 
-    if clinician_email:
-        send_email(clinician_email, subject, html_body)
-    if clinician_phone:
-        send_sms(clinician_phone, sms_message)
+    No configuration flag can override this containment gate. A later
+    separately reviewed change must introduce the governed delivery path.
+    """
+    logger.warning(
+        "Critical-value notification blocked: threshold validation, "
+        "human authorization and acknowledged delivery are not implemented."
+    )
+    return False
