@@ -178,7 +178,7 @@ def test_malformed_event_retries_then_durable_quarantine(services):
                 client, name, "testgroup", mid, raw
             )
             with sessions() as db:
-                item = db.get(StreamFailure, mid.decode())
+                item = db.get(StreamFailure, f"{name}:{mid.decode()}")
                 assert item.attempts == attempt + 1
                 if attempt < MAX_ATTEMPTS - 1:
                     assert client.xpending(name, "testgroup")["pending"] == 1
@@ -186,7 +186,7 @@ def test_malformed_event_retries_then_durable_quarantine(services):
                     db.commit()
         assert client.xpending(name, "testgroup")["pending"] == 0
         with sessions() as db:
-            item = db.get(StreamFailure, mid.decode())
+            item = db.get(StreamFailure, f"{name}:{mid.decode()}")
             assert item.status == "dead_letter"
             assert item.error_code == "JSONDecodeError"
             assert item.payload_sha256 is not None

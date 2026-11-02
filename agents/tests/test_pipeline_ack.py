@@ -44,7 +44,7 @@ def test_failure_stays_pending(monkeypatch):
         client, STREAM, GROUP, MESSAGE_ID, {b"event": b'{"event_id":"x"}'}
     )
     client.xack.assert_not_called()
-    assert failures[0][0] == "1-0"
+    assert failures[0][0] == "specimen_events_stream:1-0"
     assert failures[0][2] == "RuntimeError"
 
 
@@ -77,4 +77,17 @@ def test_deferred_pending_entries_not_acked(monkeypatch):
     client = Mock()
     monkeypatch.setattr(pipeline, "stream_retry_state", lambda _id: "defer")
     assert not pipeline.handle_stream_message(client, STREAM, GROUP, MESSAGE_ID, {})
+    client.xack.assert_not_called()
+
+
+def test_retry_ledger_key_distinguishes_streams(monkeypatch):
+    client = Mock()
+    keys = []
+    def retry_lookup(key):
+        keys.append(key)
+        return "defer"
+    monkeypatch.setattr(pipeline, "stream_retry_state", retry_lookup)
+    assert not pipeline.handle_stream_message(client, "stream_one", GROUP, MESSAGE_ID, {})
+    assert not pipeline.handle_stream_message(client, "stream_two", GROUP, MESSAGE_ID, {})
+    assert keys == ["stream_one:1-0", "stream_two:1-0"]
     client.xack.assert_not_called()

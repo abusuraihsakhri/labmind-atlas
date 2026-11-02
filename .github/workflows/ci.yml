@@ -136,3 +136,13 @@ jobs:
           python -m alembic upgrade head
       - name: Run PostgreSQL and Redis integrity, recovery and outbox tests
         run: python -m pytest -q agents/tests/test_ingestion_integrity.py agents/tests/test_pipeline_ack.py agents/tests/test_recovery_integration.py
+
+  test-critical-safety-containment:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Verify no unapproved critical notifications
+        run: python -m unittest discover -s agents/tests -p "test_safety_containment.py" -v

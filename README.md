@@ -72,6 +72,15 @@ The deployed web dashboard uses a signed, HTTP-only session tied to a server-con
 
 The current code is a prototype. Clinical critical-value thresholds, response times, notification delivery, laboratory-specific TAT rules, model output and the audit subsystem require independent validation before clinical deployment. High-priority work remains on [critical-value routing safety](https://github.com/abusuraihsakhri/labmind-atlas/issues/2) and [stream processing reliability](https://github.com/abusuraihsakhri/labmind-atlas/issues/3).
 
+## Clinical notification containment (P0)
+
+Critical-value routing remains **disabled**, including when SMTP/SMS configuration is present.
+The default trust stage is OBSERVE. Free-text/LLM matches yield only
+unverified internal-review proposals; they must not persist a routed
+critical-value record, make external calls, or initiate clinician notification.
+SUGGEST and human approval do not override this prohibition. The P0
+safety-containment suite runs in CI together with P1/P2 ingestion and recovery tests.
+
 ## Event ingestion integrity — P1 (prototype only)
 
 The agent listener now validates incoming specimen event IDs and timezone-aware
@@ -115,7 +124,7 @@ This has a write-throughput cost and depends on stable durable storage; it is
 not an end-to-end exactly-once guarantee. Do not prune stream entries before
 dead-letter reconciliation. Invalid/malformed messages and repeated failures use persisted,
 exponentially backed-off retries (maximum five attempts). Dead-letter
-diagnostics store the Redis entry ID, error *class* and SHA-256 payload digest,
+diagnostics store the stream-scoped Redis entry ID, error *class* and SHA-256 payload digest,
 not event bodies. The outbox likewise uses five bounded retries and persists
 failed work for operator reconciliation; no automatic reprocessing of
 dead-letter work is provided.

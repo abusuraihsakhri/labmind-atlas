@@ -40,7 +40,9 @@ def _handle_shutdown(signum, frame):
 def handle_stream_message(client, stream_name, group, message_id, payload):
     """XACK only after a successful ingestion commit or durable dead letter."""
     stream_id = message_id.decode() if isinstance(message_id, bytes) else str(message_id)
-    state = stream_retry_state(stream_id)
+    # Redis entry IDs are unique per stream, not globally unique.
+    retry_key = f"{stream_name}:{stream_id}"
+    state = stream_retry_state(retry_key)
     if state == "defer":
         return False
     if state == "dead_letter":
@@ -62,7 +64,7 @@ def handle_stream_message(client, stream_name, group, message_id, payload):
         # Never log untrusted payload, value text or exception strings (may
         # include patient content); error type and payload hash suffice.
         logger.warning("Stream event %s processing failed (%s)", stream_id, type(exc).__name__)
-        status = record_stream_failure(stream_id, payload_hash, exc)
+        status = record_stream_failure(retry_key, payload_hash, exc)
         if status == "dead_letter":
             # Dead-letter metadata must be committed before acknowledgement.
             client.xack(stream_name, group, message_id)
@@ -72,7 +74,7 @@ def handle_stream_message(client, stream_name, group, message_id, payload):
         pipeline_processing_seconds.observe(time.monotonic() - started_at)
 
     # A failed diagnostic update or Redis XACK leaves the source recoverable.
-    record_stream_success(stream_id)
+    record_stream_success(retry_key)
     client.xack(stream_name, group, message_id)
     if not outcome.duplicate:
         events_processed_total.labels(
