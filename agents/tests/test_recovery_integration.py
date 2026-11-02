@@ -4,7 +4,7 @@ import os
 import time
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 import redis
@@ -69,7 +69,7 @@ def test_outbox_processing_is_deterministic_and_side_effect_free(services):
     assert outbox.run_outbox_batch(session_factory=sessions, trust_stage="SUGGEST") == 1
     assert outbox.run_outbox_batch(session_factory=sessions, trust_stage="SUGGEST") == 0
     with sessions() as db:
-        row = db.get(WorkflowOutbox, payload["event_id"])
+        row = db.get(WorkflowOutbox, UUID(payload["event_id"]))
         assert row.status == "completed"
         assert count(db, Action) == 2
         assert count(db, AuditEvent) == 2
