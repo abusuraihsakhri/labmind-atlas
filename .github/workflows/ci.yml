@@ -146,3 +146,120 @@ jobs:
           python-version: "3.12"
       - name: Verify no unapproved critical notifications
         run: python -m unittest discover -s agents/tests -p "test_safety_containment.py" -v
+
+  test-existing-schema-upgrade:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: labmind_upgrade
+          POSTGRES_PASSWORD: labmind_ci_only
+          POSTGRES_DB: labmind_upgrade
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U labmind_upgrade -d labmind_upgrade"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://labmind_upgrade:labmind_ci_only@localhost:5432/labmind_upgrade
+      PYTHONPATH: ${{ github.workspace }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install Alembic dependencies
+        run: python -m pip install sqlalchemy==2.0.30 psycopg2-binary==2.9.9 alembic==1.13.1
+      - name: Upgrade populated 001 schema to 003 without losing source events
+        working-directory: agents
+        run: |
+          set -euo pipefail
+          python -m alembic upgrade 001_initial
+          python - <<'PY'
+          import os
+          from sqlalchemy import create_engine, text
+          engine = create_engine(os.environ["DATABASE_URL"])
+          with engine.begin() as db:
+              db.execute(text("""
+                  INSERT INTO specimen_events
+                    (id, specimen_token, event_type, test_code, status,
+                     occurred_at, received_at, anon_clinician_token)
+                  VALUES
+                    ('00000000-0000-4000-8000-000000000123',
+                     'SPECIMEN_upgrade_synthetic', 'ORDER_PLACED', 'CHEM-20',
+                     'ORDERED', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP,
+                     'CLINICIAN_synthetic')
+              """))
+          PY
+          python -m alembic upgrade head
+          python - <<'PY'
+          import os
+          from sqlalchemy import create_engine, text
+          engine = create_engine(os.environ["DATABASE_URL"])
+          with engine.connect() as db:
+              assert db.scalar(text("SELECT version_num FROM alembic_version")) == "003_retry_recovery"
+              assert db.scalar(text(
+                  "SELECT count(*) FROM specimen_events WHERE specimen_token='SPECIMEN_upgrade_synthetic'"
+              )) == 1
+              assert db.scalar(text(
+                  "SELECT count(*) FROM information_schema.tables WHERE table_name='stream_failures'"
+              )) == 1
+          PY
+
+  test-redis-aof-restart:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install Redis test client
+        run: python -m pip install redis==5.0.5
+      - name: Verify pending stream survives AOF-backed Redis restart
+        run: |
+          set -euo pipefail
+          NAME="labmind-aof-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          docker volume create "$NAME"
+          trap 'docker rm -f "$NAME" >/dev/null 2>&1 || true; docker volume rm "$NAME" >/dev/null 2>&1 || true' EXIT
+          docker run -d --name "$NAME" -p 127.0.0.1:6380:6379 -v "$NAME":/data redis:7-alpine redis-server --appendonly yes --appendfsync always
+          python - <<'PY'
+          import time, redis
+          r = redis.Redis(host="127.0.0.1", port=6380)
+          for _ in range(60):
+              try:
+                  if r.ping():
+                      break
+              except redis.exceptions.ConnectionError:
+                  time.sleep(0.1)
+          else:
+              raise AssertionError("Redis AOF container did not become ready")
+          assert r.config_get("appendonly")["appendonly"] == "yes"
+          r.xgroup_create("aof_synthetic_stream", "agents_group", id="0", mkstream=True)
+          r.xadd("aof_synthetic_stream", {"event": '{"synthetic":true}'}, id="1000-0")
+          assert r.xreadgroup("agents_group", "worker_before_restart", {"aof_synthetic_stream": ">"}, count=1)
+          assert r.xpending("aof_synthetic_stream", "agents_group")["pending"] == 1
+          PY
+          docker stop "$NAME"
+          docker start "$NAME"
+          python - <<'PY'
+          import time, redis
+          r = redis.Redis(host="127.0.0.1", port=6380)
+          for _ in range(60):
+              try:
+                  if r.ping():
+                      break
+              except redis.exceptions.ConnectionError:
+                  time.sleep(0.1)
+          else:
+              raise AssertionError("Redis did not return after restart")
+          assert r.xlen("aof_synthetic_stream") == 1
+          assert r.xpending("aof_synthetic_stream", "agents_group")["pending"] == 1
+          _cursor, claimed, _deleted = r.xautoclaim(
+              "aof_synthetic_stream", "agents_group", "worker_after_restart",
+              min_idle_time=0, start_id="0-0", count=10
+          )
+          assert len(claimed) == 1 and claimed[0][0] == b"1000-0"
+          PY
