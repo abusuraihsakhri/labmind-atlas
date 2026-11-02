@@ -109,7 +109,11 @@ The P2 worker reclaims abandoned Redis consumer-group entries using `XAUTOCLAIM`
 the transactional P1 path, and runs a separate durable outbox dispatcher.
 Stream messages are acknowledged **only after** their PostgreSQL event
 transaction succeeds or a failure is committed to the durable dead-letter
-ledger. Invalid/malformed messages and repeated failures use persisted,
+ledger. Compose now enables Redis AOF with `appendfsync always` to reduce the
+window in which acknowledged gateway writes could be lost on a Redis crash.
+This has a write-throughput cost and depends on stable durable storage; it is
+not an end-to-end exactly-once guarantee. Do not prune stream entries before
+dead-letter reconciliation. Invalid/malformed messages and repeated failures use persisted,
 exponentially backed-off retries (maximum five attempts). Dead-letter
 diagnostics store the Redis entry ID, error *class* and SHA-256 payload digest,
 not event bodies. The outbox likewise uses five bounded retries and persists
