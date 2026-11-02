@@ -252,7 +252,8 @@ jobs:
           assert r.xreadgroup("agents_group", "worker_before_restart", {"aof_synthetic_stream": ">"}, count=1)
           assert r.xpending("aof_synthetic_stream", "agents_group")["pending"] == 1
           PY
-          docker stop "$NAME"
+          # SIGKILL tests abrupt termination rather than a graceful Redis shutdown.
+          docker kill -s KILL "$NAME"
           docker start "$NAME"
           python - <<'PY'
           import time, redis
