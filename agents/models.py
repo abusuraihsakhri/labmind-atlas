@@ -36,6 +36,20 @@ class WorkflowOutbox(Base):
     last_error = Column(Text)
     created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
     processed_at = Column(DateTime(timezone=True))
+    next_attempt_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+
+
+class StreamFailure(Base):
+    """Durable retry/dead-letter metadata without event payload or PHI."""
+    __tablename__ = "stream_failures"
+    stream_id = Column(String(100), primary_key=True)
+    attempts = Column(Integer, nullable=False, default=0)
+    status = Column(String(20), nullable=False, default="pending")
+    next_attempt_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    error_code = Column(String(100), nullable=False)
+    payload_sha256 = Column(String(64), nullable=False)
+    created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    dead_lettered_at = Column(DateTime(timezone=True))
 
 
 class EpisodicMemory(Base):
