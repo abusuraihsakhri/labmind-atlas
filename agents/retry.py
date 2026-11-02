@@ -24,6 +24,8 @@ def stream_retry_state(stream_id: str, now=None) -> str:
             return "ready"
         if record.status == "dead_letter":
             return "dead_letter"
+        if record.status == "resolved":
+            return "ready"
         return "defer" if record.next_attempt_at > now else "ready"
 
 
