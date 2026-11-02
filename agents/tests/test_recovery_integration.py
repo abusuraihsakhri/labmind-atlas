@@ -2,6 +2,7 @@
 import json
 import os
 import time
+import threading
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
 from uuid import UUID, uuid4
@@ -192,3 +193,63 @@ def test_malformed_event_retries_then_durable_quarantine(services):
             assert item.payload_sha256 is not None
     finally:
         client.delete(name)
+
+
+def test_restarted_listener_reclaims_pending_and_reconciles(services, monkeypatch):
+    """Exercise the actual listener loop, XAUTOCLAIM and default OBSERVE outbox."""
+    sessions, client = services
+    stream, group = "specimen_events_stream", "agents_group"
+    payload = event_payload(comments="CRITICAL VALUE: synthetic review only")
+    client.delete(stream)
+    client.xgroup_create(stream, group, id="0", mkstream=True)
+    mid = client.xadd(stream, {b"event": json.dumps(payload).encode()})
+    delivered = client.xreadgroup(
+        group, "abandoned_pre_restart_worker", {stream: ">"}, count=1
+    )
+    assert delivered[0][1][0][0] == mid
+    assert client.xpending(stream, group)["pending"] == 1
+
+    # Run the production listener in a replacement thread. Use the minimum
+    # supported idle threshold to keep this isolated CI test bounded.
+    monkeypatch.setattr(pipeline, "REDIS_URL", REDIS_URL)
+    monkeypatch.setattr(pipeline, "CLAIM_IDLE_MS", 1000)
+    stop = threading.Event()
+    replacement = threading.Thread(
+        target=pipeline.start_pipeline_listener,
+        kwargs={"stop_event": stop},
+        daemon=True,
+    )
+    replacement.start()
+    try:
+        deadline = time.monotonic() + 10
+        while time.monotonic() < deadline:
+            if client.xpending(stream, group)["pending"] == 0:
+                break
+            assert replacement.is_alive()
+            time.sleep(0.1)
+        assert client.xpending(stream, group)["pending"] == 0
+    finally:
+        stop.set()
+        replacement.join(timeout=5)
+        assert not replacement.is_alive()
+        client.delete(stream)
+
+    with sessions() as db:
+        assert count(db, SpecimenEvent) == 1
+        assert count(db, WorkflowOutbox) == 1
+        assert count(db, StreamFailure) == 0
+
+    # No duplicate internal proposals; OBSERVE creates rejected review
+    # artifacts, never an externally dispatchable alert.
+    assert outbox.run_outbox_batch(session_factory=sessions) == 1
+    assert outbox.run_outbox_batch(session_factory=sessions) == 0
+    with sessions() as db:
+        assert count(db, Action) == 2
+        assert count(db, AuditEvent) == 2
+        assert db.get(WorkflowOutbox, UUID(payload["event_id"])).status == "completed"
+        actions = db.scalars(select(Action)).all()
+        assert all(action.status == "rejected" for action in actions)
+        for action in actions:
+            assert action.action_type != "ROUTE_CRITICAL_ALERT"
+            if action.action_type == "REVIEW_UNVERIFIED_CRITICAL_SIGNAL":
+                assert action.payload_jsonb["dispatch_allowed"] is False
