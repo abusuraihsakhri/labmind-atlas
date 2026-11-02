@@ -14,7 +14,7 @@ GROUP = "agents_group"
 def test_ack_only_after_committed_ingestion(monkeypatch):
     client = Mock()
     observed = []
-    raw = json.dumps({"event_id": "00000000-0000-4000-8000-000000000001"}).encode()
+    raw = json.dumps({"event_id": "00000000-0000-4000-8000-000000000001", "event_type": "ORDER_PLACED", "status": "ORDERED"}).encode()
     monkeypatch.setattr(pipeline, "stream_retry_state", lambda _id: "ready")
     monkeypatch.setattr(pipeline, "record_stream_success", lambda _id: observed.append("recorded"))
     monkeypatch.setattr(pipeline, "SessionLocal", lambda: nullcontext(Mock()))
