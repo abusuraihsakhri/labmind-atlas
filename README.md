@@ -83,13 +83,9 @@ preserved as history but do not regress the latest specimen status. Gateway
 `received_at` is excluded from replay identity because the gateway may set a
 new reception timestamp for the same submitted LIS event.
 
-**Important functional limitation:** This P1 change intentionally pauses
-downstream TAT/critical workflow execution. Jobs are persisted in
-`workflow_outbox` with status `pending`; no dispatcher has been installed
-yet. The next remediation must implement idempotent outbox execution, Redis
-pending-entry reclamation, bounded retries and dead-letter handling. Failed
-ingestion stays unacknowledged, but P1 alone does **not** recover previously
-pending Redis entries. Do not use this implementation for clinical workflow.
+P1 provides the durable ingest/outbox transaction; P2 below adds a
+bounded-retry dispatcher for **internal** TAT and free-text review only.
+Neither stage enables clinical critical-value routing or external alerts.
 
 Before starting a database that has been initialized under the original
 Compose schema, apply the new migration. Back up the database and inspect its
@@ -105,6 +101,45 @@ outbox inserts rather than silently acknowledging events.
 The CI job `test-event-ingestion-postgres` applies migrations to a fresh
 pgvector/PostgreSQL service and runs rollback, ordering, duplicate, conflicting
 ID, concurrent-ingestion and acknowledgement boundary tests.
+
+## Event recovery and internal workflow outbox (P2)
+
+The P2 worker reclaims abandoned Redis consumer-group entries using `XAUTOCLAIM`
+(30-second minimum idle by default), validates and ingests each record through
+the transactional P1 path, and runs a separate durable outbox dispatcher.
+Stream messages are acknowledged **only after** their PostgreSQL event
+transaction succeeds or a failure is committed to the durable dead-letter
+ledger. Compose now enables Redis AOF with `appendfsync always` to reduce the
+window in which acknowledged gateway writes could be lost on a Redis crash.
+This has a write-throughput cost and depends on stable durable storage; it is
+not an end-to-end exactly-once guarantee. Do not prune stream entries before
+dead-letter reconciliation. Invalid/malformed messages and repeated failures use persisted,
+exponentially backed-off retries (maximum five attempts). Dead-letter
+diagnostics store the Redis entry ID, error *class* and SHA-256 payload digest,
+not event bodies. The outbox likewise uses five bounded retries and persists
+failed work for operator reconciliation; no automatic reprocessing of
+dead-letter work is provided.
+
+Outbox actions use deterministic IDs and complete in the same PostgreSQL
+transaction as the outbox status and append-only audit entry. A crash before
+commit leaves the job pending without partially committed actions; repeated
+workers use row locks to prevent duplicate proposals. Superseded events are
+retained but do not create stale proposals. The dispatcher currently performs
+**internal TAT risk review and unverified free-text review only**. It does not
+invoke language models, create routed critical-value records, contact
+clinicians, or send email/SMS. Free-text review matches are not clinically
+validated critical results. No external critical-value routing is authorized.
+
+Existing databases must be backed up and migrated through
+`003_retry_recovery` before starting the agents. The existing Compose
+SQL initializer creates the fresh-volume schema only. The backend remains a
+research prototype with **no clinical-use authorization**. Governance,
+structured panic thresholds, attributable human approvals and acknowledged
+delivery remain outstanding under issue #2.
+
+CI exercises PostgreSQL and Redis crash/retry/dead-letter scenarios in
+`test-event-ingestion-postgres`. No clinical deployment is implied by
+passing software tests.
 
 ## Browser compatibility and license
 

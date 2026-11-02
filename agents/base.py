@@ -6,6 +6,7 @@ import hmac
 from typing import Literal
 from pydantic import BaseModel
 from datetime import datetime, timezone
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 from agents.models import Action as ActionModel, AuditEvent
 
@@ -79,8 +80,13 @@ class ActionExecutor:
         actor: str,
         actor_tier: str,
         event_type: str,
-        details: dict
+        details: dict,
+        commit: bool = True,
     ) -> str:
+        # Serialize hash-chain inserts across PostgreSQL transactions. The
+        # advisory transaction lock is shared by outbox and API audit calls.
+        if db.get_bind().dialect.name == "postgresql":
+            db.execute(text("SELECT pg_advisory_xact_lock(745013991)"))
         # Fetch the last audit event to get prev_hash
         last_event = db.query(AuditEvent).order_by(AuditEvent.id.desc()).first()
         prev_hash = last_event.row_hash if last_event else "0" * 64
@@ -103,7 +109,10 @@ class ActionExecutor:
         )
 
         db.add(audit_entry)
-        db.commit()
+        if commit:
+            db.commit()
+        else:
+            db.flush()
         return row_hash
 
     @staticmethod
