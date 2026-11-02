@@ -70,6 +70,16 @@ jobs:
       - uses: actions/checkout@v4
       - name: Build agents Docker image
         run: docker build -t labmind-agents ./agents
+      - name: Smoke-test the actual agents image import with synthetic credentials
+        run: |
+          docker run --rm --entrypoint python \
+            -e AUDIT_SECRET_KEY=ci-synthetic-audit-key \
+            -e TIER2_AUTH_SECRET=ci-synthetic-tier2 \
+            -e TIER3_AUTH_SECRET=ci-synthetic-tier3 \
+            -e SERVICE_AUTH_SECRET=ci-synthetic-service \
+            -e DATABASE_URL=postgresql://unused:unused@127.0.0.1:5432/unused \
+            -e REDIS_URL=redis://127.0.0.1:6379/0 \
+            labmind-agents -c "from agents.main import app; assert app.title == 'LabMind Cloud Agents Service'; print('Agents application import OK')"
 
   test-pages-demo:
     runs-on: ubuntu-latest
