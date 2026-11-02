@@ -1,164 +1,144 @@
-import os
+"""Redis stream ingestion with crash recovery and durable dead-letter handling."""
+import hashlib
 import json
-import time
-import signal
-import threading
 import logging
+import os
+import signal
+import socket
+import threading
+import time
+from uuid import uuid4
+
 import redis
-from datetime import datetime, timedelta
-from sqlalchemy.orm import Session
+
 from agents.database import SessionLocal
-from agents.models import SpecimenEvent, SpecimenState
-from agents.metrics import events_processed_total, pipeline_batch_size, pipeline_processing_seconds
+from agents.ingestion import process_stream_event
+from agents.metrics import (
+    events_processed_total,
+    pipeline_batch_size,
+    pipeline_processing_seconds,
+)
+from agents.retry import (
+    record_stream_failure,
+    record_stream_success,
+    stream_retry_state,
+)
 
 logger = logging.getLogger("labmind.pipeline")
-
-BATCH_SIZE = int(os.getenv("PIPELINE_BATCH_SIZE", "10"))
+BATCH_SIZE = max(1, int(os.getenv("PIPELINE_BATCH_SIZE", "10")))
+CLAIM_IDLE_MS = max(1000, int(os.getenv("PIPELINE_CLAIM_IDLE_MS", "30000")))
+REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 _shutdown_requested = False
 
 
 def _handle_shutdown(signum, frame):
     global _shutdown_requested
     _shutdown_requested = True
-    logger.info("Shutdown signal received (signal=%d). Draining pipeline...", signum)
+    logger.info("Shutdown signal %s; all unprocessed messages remain pending", signum)
 
-REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 
-# Setup nominal TAT mapper for state initializer
-TAT_MAP = {
-    "HISTO-01": 2880, # 48 hours
-    "CHEM-20": 60,    # 1 hour
-    "HEMA-10": 45,    # 45 mins
-}
+def handle_stream_message(client, stream_name, group, message_id, payload):
+    """XACK only after a successful ingestion commit or durable dead letter."""
+    stream_id = message_id.decode() if isinstance(message_id, bytes) else str(message_id)
+    # Redis entry IDs are unique per stream, not globally unique.
+    retry_key = f"{stream_name}:{stream_id}"
+    state = stream_retry_state(retry_key)
+    if state == "defer":
+        return False
+    if state == "dead_letter":
+        client.xack(stream_name, group, message_id)
+        return True
 
-def process_stream_event(event_data: dict, db: Session):
+    raw = payload.get(b"event")
+    payload_hash = hashlib.sha256(raw if isinstance(raw, bytes) else b"missing").hexdigest()
+    started_at = time.monotonic()
     try:
-        import time as _time
-        start = _time.monotonic()
+        if not isinstance(raw, bytes):
+            raise ValueError("Missing event field")
+        event = json.loads(raw)
+        if not isinstance(event, dict):
+            raise ValueError("Event must be a JSON object")
+        with SessionLocal() as db:
+            outcome = process_stream_event(event, db)
+    except Exception as exc:
+        # Never log untrusted payload, value text or exception strings (may
+        # include patient content); error type and payload hash suffice.
+        logger.warning("Stream event %s processing failed (%s)", stream_id, type(exc).__name__)
+        status = record_stream_failure(retry_key, payload_hash, exc)
+        if status == "dead_letter":
+            # Dead-letter metadata must be committed before acknowledgement.
+            client.xack(stream_name, group, message_id)
+            logger.error("Stream entry %s quarantined after bounded failures", stream_id)
+        return False
+    finally:
+        pipeline_processing_seconds.observe(time.monotonic() - started_at)
 
-        occurred_at = datetime.fromisoformat(event_data["occurred_at"])
-        received_at = datetime.fromisoformat(event_data["received_at"])
-
-        event_entry = SpecimenEvent(
-            id=event_data["event_id"],
-            specimen_token=event_data["specimen_token"],
-            event_type=event_data["event_type"],
-            test_code=event_data["test_code"],
-            status=event_data["status"],
-            occurred_at=occurred_at,
-            received_at=received_at,
-            anon_clinician_token=event_data["clinician_token"],
-            meta_jsonb={"comments": event_data["de_identified_comments"]}
-        )
-        db.add(event_entry)
-
-        # Update or Create SpecimenState (Working memory mirror)
-        state = db.query(SpecimenState).filter(SpecimenState.specimen_token == event_data["specimen_token"]).first()
-
-        if not state:
-            # First time seeing this specimen (accessioning)
-            nominal_minutes = TAT_MAP.get(event_data["test_code"], 60)
-            expected_signout = occurred_at + timedelta(minutes=nominal_minutes)
-
-            state = SpecimenState(
-                specimen_token=event_data["specimen_token"],
-                current_status=event_data["status"],
-                accessioned_at=occurred_at,
-                expected_signout_at=expected_signout,
-                tat_risk_level="green",
-                last_event_at=occurred_at
-            )
-            db.add(state)
-        else:
-            # Update status and timestamps
-            state.current_status = event_data["status"]
-            state.last_event_at = occurred_at
-
-        db.commit()
-        elapsed = _time.monotonic() - start
-        pipeline_processing_seconds.observe(elapsed)
+    # A failed diagnostic update or Redis XACK leaves the source recoverable.
+    record_stream_success(retry_key)
+    client.xack(stream_name, group, message_id)
+    if not outcome.duplicate:
         events_processed_total.labels(
-            event_type=event_data["event_type"],
-            status=event_data["status"]
+            event_type=event["event_type"], status=event["status"]
         ).inc()
-        logger.info("Processed event %s for specimen %s (%.3fs)", event_data['event_type'], event_data['specimen_token'], elapsed)
+    return True
 
-        # Trigger Workflow Manager evaluation
-        from agents.workflow_manager import WorkflowManagerAgent
-        from agents.main import GLOBAL_CONFIG
 
-        manager = WorkflowManagerAgent()
-        manager.process_specimen_update(
-            specimen_token=event_data["specimen_token"],
-            db=db,
-            clinician_token=event_data["clinician_token"],
-            trust_stage=GLOBAL_CONFIG.get("trust_stage", "SUGGEST")
-        )
-
-    except Exception as e:
-
-        db.rollback()
-        logger.error("Failed to process event: %s", e, exc_info=True)
-
-def start_pipeline_listener():
+def start_pipeline_listener(stop_event=None):
     global _shutdown_requested
-
-    # signal.signal may only be called from the main Python thread.
-    # FastAPI starts this listener in a daemon background thread.
     if threading.current_thread() is threading.main_thread():
         signal.signal(signal.SIGINT, _handle_shutdown)
         signal.signal(signal.SIGTERM, _handle_shutdown)
 
-    r = redis.Redis.from_url(REDIS_URL)
-    stream_name = "specimen_events_stream"
-
-    logger.info("Pipeline listener starting. Monitoring Redis stream: %s", stream_name)
-
-    # Create the stream if it does not exist
+    client = redis.Redis.from_url(REDIS_URL)
+    stream = "specimen_events_stream"
+    group = "agents_group"
+    consumer = f"{socket.gethostname()}-{os.getpid()}-{uuid4().hex[:8]}"
     try:
-        r.xgroup_create(stream_name, "agents_group", id="0", mkstream=True)
-    except redis.exceptions.ResponseError:
-        pass
+        client.xgroup_create(stream, group, id="0", mkstream=True)
+    except redis.exceptions.ResponseError as exc:
+        if "BUSYGROUP" not in str(exc):
+            raise
 
-    while not _shutdown_requested:
+    def stopped():
+        return _shutdown_requested or (stop_event is not None and stop_event.is_set())
+
+    logger.info("Redis stream consumer started: %s", consumer)
+    while not stopped():
         try:
-            messages = r.xreadgroup("agents_group", "consumer_1", {stream_name: ">"}, count=BATCH_SIZE, block=2000)
-            if not messages:
-                continue
-
-            for stream, stream_msgs in messages:
-                batch = []
-                for msg_id, payload in stream_msgs:
-                    if _shutdown_requested:
-                        logger.info("Shutdown requested. Acknowledging remaining messages and exiting.")
-                        r.xack(stream_name, "agents_group", msg_id)
-                        continue
-
-                    event_json = payload[b"event"].decode("utf-8")
-                    event_data = json.loads(event_json)
-                    batch.append((msg_id, event_data))
-
-                if not batch:
+            # Reclaim abandoned entries before consuming new ones. Reclaimed
+            # events remain subject to the persisted next-retry timestamp.
+            _cursor, claimed, _deleted = client.xautoclaim(
+                stream, group, consumer,
+                min_idle_time=CLAIM_IDLE_MS,
+                start_id="0-0",
+                count=BATCH_SIZE,
+            )
+            batches = [(stream, claimed)] if claimed else client.xreadgroup(
+                group, consumer, {stream: ">"}, count=BATCH_SIZE, block=2000
+            )
+            for _stream, entries in batches:
+                handled = 0
+                for message_id, payload in entries:
+                    if stopped():
+                        break
+                    try:
+                        if handle_stream_message(client, stream, group, message_id, payload):
+                            handled += 1
+                    except Exception as exc:
+                        # Database exception strings can contain source parameters.
+                        # Log the type without echoing potentially sensitive data.
+                        logger.error("Stream infrastructure failure (%s)", type(exc).__name__)
+                        time.sleep(2)
+                pipeline_batch_size.observe(handled)
+                if stopped():
                     break
-
-                db = SessionLocal()
-                try:
-                    for msg_id, event_data in batch:
-                        process_stream_event(event_data, db)
-                        r.xack(stream_name, "agents_group", msg_id)
-                    pipeline_batch_size.observe(len(batch))
-                    logger.info("Processed batch of %d events", len(batch))
-                except Exception as e:
-                    logger.error("Batch processing error (messages will be retried): %s", e, exc_info=True)
-                finally:
-                    db.close()
-        except Exception as e:
-            if _shutdown_requested:
+        except Exception as exc:
+            if stopped():
                 break
-            logger.error("Pipeline loop error: %s", e, exc_info=True)
+            logger.error("Redis stream listener failure (%s)", type(exc).__name__)
             time.sleep(2)
+    logger.info("Redis stream listener stopped; unprocessed entries are pending")
 
-    logger.info("Pipeline listener stopped gracefully.")
 
 if __name__ == "__main__":
     start_pipeline_listener()

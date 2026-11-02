@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer, DateTime, Boolean, Numeric, BigInteger, Text
+from sqlalchemy import Column, String, Integer, DateTime, Boolean, Numeric, BigInteger, Text, ForeignKey, func
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from .database import Base
 import datetime
@@ -23,6 +23,34 @@ class SpecimenState(Base):
     expected_signout_at = Column(DateTime(timezone=True), nullable=False)
     tat_risk_level = Column(String(50), nullable=False)
     last_event_at = Column(DateTime(timezone=True), nullable=False)
+
+class WorkflowOutbox(Base):
+    """Durable post-ingest work; P1 stores jobs but intentionally does not dispatch."""
+    __tablename__ = "workflow_outbox"
+    event_id = Column(UUID(as_uuid=True), ForeignKey("specimen_events.id"), primary_key=True)
+    specimen_token = Column(String(255), nullable=False, index=True)
+    clinician_token = Column(String(255), nullable=False)
+    state_applied = Column(Boolean, nullable=False)
+    status = Column(String(20), nullable=False, default="pending")
+    attempts = Column(Integer, nullable=False, default=0)
+    last_error = Column(Text)
+    created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    processed_at = Column(DateTime(timezone=True))
+    next_attempt_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+
+
+class StreamFailure(Base):
+    """Durable retry/dead-letter metadata without event payload or PHI."""
+    __tablename__ = "stream_failures"
+    stream_id = Column(String(100), primary_key=True)
+    attempts = Column(Integer, nullable=False, default=0)
+    status = Column(String(20), nullable=False, default="pending")
+    next_attempt_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    error_code = Column(String(100), nullable=False)
+    payload_sha256 = Column(String(64), nullable=False)
+    created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    dead_lettered_at = Column(DateTime(timezone=True))
+
 
 class EpisodicMemory(Base):
     __tablename__ = "episodic_memory"

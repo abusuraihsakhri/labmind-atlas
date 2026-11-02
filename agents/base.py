@@ -6,6 +6,7 @@ import hmac
 from typing import Literal
 from pydantic import BaseModel
 from datetime import datetime, timezone
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 from agents.models import Action as ActionModel, AuditEvent
 
@@ -79,8 +80,13 @@ class ActionExecutor:
         actor: str,
         actor_tier: str,
         event_type: str,
-        details: dict
+        details: dict,
+        commit: bool = True,
     ) -> str:
+        # Serialize hash-chain inserts across PostgreSQL transactions. The
+        # advisory transaction lock is shared by outbox and API audit calls.
+        if db.get_bind().dialect.name == "postgresql":
+            db.execute(text("SELECT pg_advisory_xact_lock(745013991)"))
         # Fetch the last audit event to get prev_hash
         last_event = db.query(AuditEvent).order_by(AuditEvent.id.desc()).first()
         prev_hash = last_event.row_hash if last_event else "0" * 64
@@ -103,7 +109,10 @@ class ActionExecutor:
         )
 
         db.add(audit_entry)
-        db.commit()
+        if commit:
+            db.commit()
+        else:
+            db.flush()
         return row_hash
 
     @staticmethod
@@ -111,7 +120,7 @@ class ActionExecutor:
         db: Session,
         proposal: ActionProposed,
         agent_name: str,
-        trust_stage: Literal["OBSERVE", "SUGGEST"] = "SUGGEST"
+        trust_stage: Literal["OBSERVE", "SUGGEST"] = "OBSERVE"
     ) -> dict:
         from agents.metrics import actions_proposed_total
         action_id = str(uuid.uuid4())
@@ -119,14 +128,14 @@ class ActionExecutor:
         # Validate confidence is within bounds
         confidence = max(0.0, min(1.0, proposal.confidence))
 
-        # 1. 🔒 Observe trust stage constraint: takes NO action
-        if trust_stage == "OBSERVE":
-            status = "rejected"
-            reasoning = "Rejected automatically: System is in read-only OBSERVE stage."
-        else:
-            # Under SUGGEST, all proposed actions require manual operator approval
+        # Only an explicit SUGGEST stage may create an internal proposal.
+        if trust_stage == "SUGGEST":
             status = "proposed"
             reasoning = proposal.reasoning
+        else:
+            # OBSERVE and all invalid stages fail closed.
+            status = "rejected"
+            reasoning = "Rejected automatically: trust stage is not SUGGEST."
 
         action_db = ActionModel(
             id=action_id,
