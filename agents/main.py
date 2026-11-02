@@ -4,6 +4,7 @@ from fastapi import FastAPI, Depends, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from agents.pipeline import start_pipeline_listener
+from agents.outbox import start_outbox_worker
 from agents.database import get_db, SessionLocal
 from agents.models import SpecimenState, Action, AuditEvent
 from agents.base import ActionExecutor
@@ -56,18 +57,30 @@ def require_tier(allowed_tiers: list):
         return user
     return role_checker
 
-# Thread-safe config for global trust stage (default to SUGGEST)
+# Thread-safe prototype trust stage, defaulting to OBSERVE
 _config_lock = threading.Lock()
 GLOBAL_CONFIG = {
-    "trust_stage": "SUGGEST"
+    "trust_stage": "OBSERVE"
 }
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Start Redis Stream listener in background thread
-    thread = threading.Thread(target=start_pipeline_listener, daemon=True)
-    thread.start()
-    yield
+    # Both workers stop together; Redis entries not committed remain pending.
+    stop_event = threading.Event()
+    stream_thread = threading.Thread(
+        target=start_pipeline_listener, kwargs={"stop_event": stop_event}, daemon=True
+    )
+    outbox_thread = threading.Thread(
+        target=start_outbox_worker, args=(stop_event,), daemon=True
+    )
+    stream_thread.start()
+    outbox_thread.start()
+    try:
+        yield
+    finally:
+        stop_event.set()
+        stream_thread.join(timeout=5)
+        outbox_thread.join(timeout=5)
 
 app = FastAPI(title="LabMind Cloud Agents Service", lifespan=lifespan)
 limiter = Limiter(key_func=get_remote_address)
