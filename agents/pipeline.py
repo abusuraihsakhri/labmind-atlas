@@ -122,18 +122,18 @@ def start_pipeline_listener(stop_event=None):
                     try:
                         if handle_stream_message(client, stream, group, message_id, payload):
                             handled += 1
-                    except Exception:
-                        # In particular, never acknowledge when retry/dead-letter
-                        # metadata cannot be committed.
-                        logger.exception("Stream processing infrastructure failed")
+                    except Exception as exc:
+                        # Database exception strings can contain source parameters.
+                        # Log the type without echoing potentially sensitive data.
+                        logger.error("Stream infrastructure failure (%s)", type(exc).__name__)
                         time.sleep(2)
                 pipeline_batch_size.observe(handled)
                 if stopped():
                     break
-        except Exception:
+        except Exception as exc:
             if stopped():
                 break
-            logger.exception("Redis stream listener error")
+            logger.error("Redis stream listener failure (%s)", type(exc).__name__)
             time.sleep(2)
     logger.info("Redis stream listener stopped; unprocessed entries are pending")
 
