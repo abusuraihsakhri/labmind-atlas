@@ -83,13 +83,9 @@ preserved as history but do not regress the latest specimen status. Gateway
 `received_at` is excluded from replay identity because the gateway may set a
 new reception timestamp for the same submitted LIS event.
 
-**Important functional limitation:** This P1 change intentionally pauses
-downstream TAT/critical workflow execution. Jobs are persisted in
-`workflow_outbox` with status `pending`; no dispatcher has been installed
-yet. The next remediation must implement idempotent outbox execution, Redis
-pending-entry reclamation, bounded retries and dead-letter handling. Failed
-ingestion stays unacknowledged, but P1 alone does **not** recover previously
-pending Redis entries. Do not use this implementation for clinical workflow.
+P1 provides the durable ingest/outbox transaction; P2 below adds a
+bounded-retry dispatcher for **internal** TAT and free-text review only.
+Neither stage enables clinical critical-value routing or external alerts.
 
 Before starting a database that has been initialized under the original
 Compose schema, apply the new migration. Back up the database and inspect its
