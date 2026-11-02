@@ -94,6 +94,15 @@ jobs:
   test-event-ingestion-postgres:
     runs-on: ubuntu-latest
     services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
       postgres:
         image: pgvector/pgvector:pg16
         env:
@@ -110,6 +119,8 @@ jobs:
     env:
       DATABASE_URL: postgresql://labmind_ci:labmind_ci_only@localhost:5432/labmind_ci
       LABMIND_TEST_DATABASE_URL: postgresql://labmind_ci:labmind_ci_only@localhost:5432/labmind_ci
+      LABMIND_TEST_REDIS_URL: redis://localhost:6379/0
+      AUDIT_SECRET_KEY: test-audit-secret-key-ci-only
       PYTHONPATH: ${{ github.workspace }}
     steps:
       - uses: actions/checkout@v4
@@ -123,5 +134,5 @@ jobs:
         run: |
           cd agents
           python -m alembic upgrade head
-      - name: Run PostgreSQL integrity and acknowledgement tests
-        run: python -m pytest -q agents/tests/test_ingestion_integrity.py agents/tests/test_pipeline_ack.py
+      - name: Run PostgreSQL and Redis integrity, recovery and outbox tests
+        run: python -m pytest -q agents/tests/test_ingestion_integrity.py agents/tests/test_pipeline_ack.py agents/tests/test_recovery_integration.py
